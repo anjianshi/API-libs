@@ -3,18 +3,18 @@
 Python 3.4 only
 
 ## API 系统的结构
-- router        通过它来注册、调用 API handler
+- `router`        通过它来注册、调用 API handler
 
-- handler       由用户注册在 router 中的一个个函数，通过它们来实现业务逻辑
+- `handler`       由用户注册在 router 中的一个个函数，通过它们来实现业务逻辑
 
-- paramemter    每个 handler 都有自己的参数列表，里面可以指定各参数的名称、类型、以及格式要求。
+- `paramemter`    每个 handler 都有自己的参数列表，里面可以指定各参数的名称、类型、以及格式要求。
                 调用 handler 时，会根据它，对调用者传入的参数值进行检查/格式化。
 
-- context       context 中存放着与此次 API 调用相关的上下文信息，还会提供一些辅助方法，帮助 handler 更容易地完成任务。
+- `context`       context 中存放着与此次 API 调用相关的上下文信息，还会提供一些辅助方法，帮助 handler 更容易地完成任务。
                 context 有很多种类型，每种类型提供不同的信息和方法，适用于不同的任务。每个 router 都会绑定一种 context 类型。
                 另外，在调用 API handler 时，除了要传入参数值，还要传入 context 初始化所需的数据。
 
-- adapter       router 本身不响应 HTTP 请求。如果想把 API 以 Web 服务的形式提供出来，就需要用到 adapter。
+- `adapter`       router 本身不响应 HTTP 请求。如果想把 API 以 Web 服务的形式提供出来，就需要用到 adapter。
                 它可以把 HTTP 请求转换为 API 调用，再把调用结果以 JSON 的形式输出给客户端。
                 目前 API-libs 只提供基于 Tornado 的 adapter。
 
