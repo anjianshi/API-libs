@@ -1,4 +1,4 @@
-'API-libs: 一套灵活的组件，帮助你快速搭建起一个 API 系统
+API-libs: 一套灵活的组件，帮助你快速搭建起一个 API 系统
 
 Python 3.4 only
 
