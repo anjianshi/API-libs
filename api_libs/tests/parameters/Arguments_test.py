@@ -45,3 +45,15 @@ class ArgumentsTestCase(TestCase):
     def test_unexpected_args(self):
         parameters = [Str("param1")]
         self.assertRaises(ArgumentsError, Arguments, parameters, dict(param1="abc", param2=1))
+
+    def test_has_method(self):
+        parameters = [
+            Str("str_param", max_len=3),
+            Int("int_param", max=3),
+            Datetime("datetime_param")
+        ]
+        raw_arguments = dict(str_param="ab", int_param=2, datetime_param=100)
+        arguments = Arguments(parameters, raw_arguments)
+
+        self.assertTrue(arguments.has("str_param"))
+        self.assertFalse(arguments.has("not_exists_param"))

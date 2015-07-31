@@ -21,6 +21,10 @@ class Arguments:
             if formatted_arg is not NoValue:
                 setattr(self, param.name, formatted_arg)
 
+    def has(self, name):
+        """检查当前对象中是否存在指定名称的 argument"""
+        return hasattr(self, name)
+
 
 class ArgumentsError(Exception):
     pass
