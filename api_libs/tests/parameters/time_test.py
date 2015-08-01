@@ -26,11 +26,13 @@ class DateTimeTestCase(TestCase, DatetimeBase):
             (0, datetime.fromtimestamp(0)),
             (0, datetime(1970, 1, 1, 8, 0)),  # 测试时区
             (-1, datetime.fromtimestamp(-1)),
-            (100000, datetime.fromtimestamp(100000))
+            (100000, datetime.fromtimestamp(100000)),
+
+            (100.567, datetime.fromtimestamp(100.567)),   # 测试 float
         ])
 
         self.batch_not_pass([
-            "1", "a", True, 1.5
+            "1", "a", True
         ])
 
 
@@ -41,9 +43,10 @@ class DateTestCase(TestCase, DatetimeBase):
         self.batch_match([
             (0, date.fromtimestamp(0)),
             (-1, date.fromtimestamp(-1)),
-            (100000, date.fromtimestamp(100000))
+            (100000, date.fromtimestamp(100000)),
+            (100.567, date.fromtimestamp(100.567)),
         ])
 
         self.batch_not_pass([
-            "1", "a", True, 1.5
+            "1", "a", True
         ])

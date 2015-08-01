@@ -222,7 +222,7 @@ Example: `Int("myint", min=1, nozero=True)`
 - `Decimal`，要求参数值是 int 或 float
 - `Str`，要求参数值是 str
 - `Bool` 要求参数值是 True 或 False
-- `Datetime`，要求参数值是能作为合法的 timestamp 使用的 int，最终会返回一个 python datetime.datetime 对象
+- `Datetime`，要求参数值是合法的 timestamp (int / float)，最终会返回一个 python datetime.datetime 对象
 - `Date`，和 Datetime 一样，不过返回的是 datetime.date 对象
 
 每种 parameter 都有自己的支持设置选项(specification)，具体如下：
