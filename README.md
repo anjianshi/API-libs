@@ -31,7 +31,7 @@ nosetests
                 
 ## Example
 
-### 1. 基本用法
+### 基本用法
 ```python
 from api_libs import Router
 
@@ -45,7 +45,7 @@ def fn(context):
 router.call("get_name")  # return "David"
 ```
 
-### 2. 给 API handler 定义参数
+### 给 API handler 定义参数
 详见后面的 `参数定义` 小节
 ```python
 from api_libs import Router
@@ -62,12 +62,55 @@ router.call("math.divide", None, dict(a=10, b=5))   # return 2
 router.call("math.divide", None, dict(a=10, b=0))   # 参数 b 不符合 nozero 的要求，报错
 ```
 
-### 3. 在一个 API handler 中调用其他 handler
+### 使用复合型参数(List, Dict)
 ```python
-from api_libs import Router
-from api_libs.parameters import *
+users = {
+    # category: [user_names]
+}
 
 
+@router.register("users.add", [
+    Str("category"), 
+    # 至少提供一个 user_name；每个 user_name 至少为 3 个字符
+    # notice: 指定 List 的 type 时，不用给 parameter 设置 name
+    List("user_names", type=Str(min_len=3), min_len=1)
+])
+def add_users(context, arguments):
+    users[arguments.category] = arguments.user_names
+    return users
+
+router.call("users.add", None, dict(category="home", user_names=["David", "Tom"]))
+# return {"home": ["David", "Tom"]}
+
+
+users_v2 = {
+    # category: [ {user1_profile}, {user2_profile},  ]
+}
+
+
+@router.register("users.add.v2", [
+    Str("category"),
+    List("profiles", type=Dict(
+        format=[
+            Str("name"),
+            Int("age"),
+            Str("address", required=False),
+        ]
+    ))
+])
+def add_users_v2(context, arguments):
+    users_v2[arguments.category] = arguments.profiles
+    return users_v2
+
+router.call("users.add", None, dict(category="home", profiles=[
+    dict(name="David", age=18, address="Tokyo"),
+    dict(name="Tom", age=20),
+]))
+# return {"home": [{"name": "David", "age": 18, address: "Tokyo"}, {"name": "Tom", "age": 20}]}
+```
+
+### 在一个 API handler 中调用其他 handler
+```python
 class Player:
     def __init__():
         self.money = 1000
@@ -77,8 +120,6 @@ players = {
     "David": Player(),
     "Tom": Player()
 }
-
-router = Router()
 
 
 @router.register("props.buy", [Str("player"), Str("props_name")])
@@ -104,12 +145,8 @@ def fn2(context, arguments):
 router.call("props.buy", None, dict(player="Tom", props_name="boots"))  # return True
 ```
 
-### 4. 使用 context
+### 使用 context
 ```python
-from api_libs import Router
-from api_libs.parameters import *
-
-
 class Player:
     def __init__():
         self.money = 1000
@@ -119,8 +156,6 @@ players = {
     "David": Player(),
     "Tom": Player()
 }
-
-router = Router()
 
 
 @router.register("props.buy", [Str("props_name")])
@@ -148,7 +183,7 @@ def fn2(context, arguments):
 router.call("props.buy", dict(player=player["Tom"]), dict(props_name="boots"))  # return True
 ```
 
-### 5. 使用自定义的 Context 类型
+### 使用自定义的 Context 类型
 上面的例子用的是默认的 Context，它提供的功能很有限。实际上通过 context 可以做非常多的事情。
 我们可以根据需要，自己定义一个 Context 类型，传给 Router。
 
@@ -189,7 +224,7 @@ def fn2(context, arguments):
 router.call("player.consume", "Tom", dict(money=100))   # return True
 ```
 
-### 6. 使用 Tornado Adapter
+### 使用 Tornado Adapter
 ```python
 from API-libs.adapters.tornado_adapter import TornadoAdapter
 from tornado.web import Application
@@ -224,6 +259,8 @@ Example: `Int("myint", min=1, nozero=True)`
 - `Bool` 要求参数值是 True 或 False
 - `Datetime`，要求参数值是合法的 timestamp (int / float)，最终会返回一个 python datetime.datetime 对象
 - `Date`，和 Datetime 一样，不过返回的是 datetime.date 对象
+- `List`，要求参数值是指定类型的一组数据
+- `Dict`，要求参数值是 dict，且符合 format spec 中定义的格式
 
 每种 parameter 都有自己的支持设置选项(specification)，具体如下：
 
@@ -250,3 +287,10 @@ Example: `Int("myint", min=1, nozero=True)`
 
 ### Bool 独有的选项
 无  
+
+### List 独有的选项
+- `min_len`     list 的最小长度
+- `max_len`     list 的最大长度
+
+### Dict 独有的选项
+无

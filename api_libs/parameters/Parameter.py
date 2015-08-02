@@ -15,9 +15,15 @@ class Parameter:
     """
     定义一个 API 参数。
 
-    :arg string name: 参数名
-    :arg specs: 对这个参数的要求（specification）。例如：required=True, nullable=False, max=10
+    Attributes:
+
+    * name: 参数名。用于某些复合参数（如 List）时不用指定，其他情况下必须指定。
+      若指定了参数名，在 verify() 时，会尝试根据参数名从传进来的数据 dict 中找到需要的参数值；
+      若未指定参数名，在 verify() 时，会直接把传进来的数据整个作为参数值，也因此 required 和 default rule 都没有意义了。
+
+    * specs: 对这个参数的要求（specification）。例如：required=True, nullable=False, max=10
       specs 需要以 kwargs 的形式提供，key 部分是规则名，value 部分是具体的要求。
+
 
     Parameter 与它的各个子类中，都定义了一系列 rule 函数，系统会按照一定顺序调用它们，来完成对参数值的检查和格式化。
     rule 函数在接收到参数值后，可以有如下几种行为：
@@ -43,12 +49,12 @@ class Parameter:
 
     default specs: required=True, nullable=False
     """
-    def __init__(self, name, **specs):
+    def __init__(self, name=NoValue, **specs):
         self.name = name
         self.specs = specs
-        self._normal_rules = self.sorted_normal_rules()
+        self._normal_rules = self._sorted_normal_rules()
 
-    def sorted_normal_rules(self):
+    def _sorted_normal_rules(self):
         if len(self.rule_order) != len(set(self.rule_order)):
             raise Exception("rule_order 不允许出现重复的内容({})".format(self.rule_order))
 
@@ -62,6 +68,7 @@ class Parameter:
         """以当前 Parameter 为基础，复制出一个新的 Parameter
 
         :arg string name: 新 parameter 的名称。若不指定，则沿用原来的名称。
+          对于一个有名称的 parameter，如果想在 copy 后让它变得没有名称，需要把此参数的值设成 NoValue。
         :arg string[] remove: 在新 parameter 中剔除指定的 rule_spec。
         :arg dict inplace: 在新 parameter 中修改原来某些 rule_spec 的值，或是插入一些原来没有的 spec
 
@@ -81,7 +88,7 @@ class Parameter:
         return type(self)(name, **specs)
 
     def verify(self, arguments):
-        value = arguments.get(self.name, NoValue)
+        value = arguments.get(self.name, NoValue) if self.name is not NoValue else arguments
 
         for rule_name in self.sysrule_order:
             value = getattr(self, "sysrule_" + rule_name)(value)

@@ -128,4 +128,3 @@ class RouterTestCase(TestCase):
             router.call("test.path", 5),
             25
         )
-

@@ -129,3 +129,38 @@ class ParameterTestCase(TestCase):
         param = Cust2("param")
         param.verify(dict(param=1))
         self.assertEqual(param.called, param.rule_order)
+
+
+class NoNameParameterTestCase(TestCase):
+    def test_define(self):
+        param = Parameter()
+        self.assertEqual(param.name, NoValue)
+        self.assertEqual(param.specs, {})
+
+        param = Parameter(nullable=True)
+        self.assertEqual(param.specs, dict(nullable=True))
+
+    def test_copy(self):
+        param1 = Parameter()
+
+        # noname => noname
+        copy1 = param1.copy(inplace=dict(nullable=True))
+        self.assertEqual(copy1.name, NoValue)
+        self.assertEqual(copy1.specs, dict(nullable=True))
+
+        # noname => has name
+        copy2 = param1.copy("new_name")
+        self.assertEqual(copy2.name, "new_name")
+
+        # has name => no name
+        param2 = Parameter("the_param2")
+        copy3 = param2.copy(NoValue)
+        self.assertEqual(copy3.name, NoValue)
+
+    def test_verify(self):
+        param = Parameter()
+        self.assertEqual(param.verify(10), 10)
+        self.assertRaises(VerifyFailed, param.verify, None)
+
+        param2 = Parameter(nullable=True)
+        self.assertEqual(param2.verify(None), None)
