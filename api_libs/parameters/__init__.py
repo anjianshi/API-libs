@@ -1,4 +1,4 @@
-from .Arguments import Arguments
+from .Arguments import Arguments, ArgumentsError
 from .Parameter import VerifyFailed, NoValue
 
 from .number_param import *
