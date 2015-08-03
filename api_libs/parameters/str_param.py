@@ -21,7 +21,7 @@ class Str(Parameter):
     def rule_min_len(self, value):
         """通过 min_len=n 指定字符串的最小长度"""
         if "min_len" in self.specs and len(value) < self.specs["min_len"]:
-            raise VerifyFailed("参数 {} 的长度必须大于 {} (got: {})".format(
+            raise VerifyFailed("参数 {} 的长度不能小于 {} (got: {})".format(
                 self.name, self.specs["min_len"], value))
         return value
 
