@@ -53,3 +53,26 @@ class ArgumentsTestCase(TestCase):
     def test_unexpected_args(self):
         parameters = [Str("param1")]
         self.assertRaises(ArgumentsError, Arguments, parameters, dict(param1="abc", param2=1))
+
+    def test_future_build(self):
+        parameters = [
+            Str("p1"),
+            Int("p2"),
+            Int("p3"),
+            Int("p4", required=False)
+        ]
+        arguments = Arguments(parameters, dict(p1="abc", p2=100, p3=1))
+
+        # 在当前 arguments 值基础上做验证
+        self.assertRaises(VerifyFailed, arguments.future_build, [Str("p1", min_len=5)])
+
+        arguments.future_build([Str("p1", min_len=3)])
+        self.assertEqual(arguments.p1, "abc")
+
+        # 验证结果写入到当前 arguments
+        arguments.future_build([Datetime("p2")])
+        self.assertEqual(arguments.p2, datetime.fromtimestamp(100))
+
+        # 能正确地对 parameters 中未给出的部分进行放行
+        self.assertEqual(arguments.p3, 1)
+        self.assertTrue("p4" not in arguments)

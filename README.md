@@ -110,6 +110,31 @@ router.call("users.add", None, dict(category="home", profiles=[
 # return {"home": [{"name": "David", "age": 18, address: "Tokyo"}, {"name": "Tom", "age": 20}]}
 ```
 
+### 两步验证参数
+```
+@router.register("customer.register", [
+    Int("type"),  # 1 代表个人, 2 代表公司,
+    CanHas("personal_name"),
+    CanHas("compony_name"),
+    Str("mobile")
+])
+def fn(context, arguments):
+    if arguments.type == 1:
+        arguments.future_build([Str("personal_name", max_len=15), CanNotHas("company_name")])
+        return dict(personal=arguments.personal_name, mobile=arguments.mobile)
+    else:
+        arguments.future_build([Str("company_name", max_len=30), CanNotHas("personal_name")])
+        return dict(compony=arguments.compony_name, mobile=arguments.mobile)
+
+router.call("customer.register", None, dict(
+    type=1,
+    personal_name="David",
+    mobile="123343"
+))
+# return dict(personal="David", mobile="123343")
+```
+
+
 ### 在一个 API handler 中调用其他 handler
 ```python
 class Player:
@@ -262,10 +287,12 @@ Example: `Int("myint", min=1, nozero=True)`
 - `Date`，和 Datetime 一样，不过返回的是 datetime.date 对象
 - `List`，要求参数值是指定类型的一组数据
 - `Dict`，要求参数值是 dict，且符合 format spec 中定义的格式
+- `CanHas`，对参数无条件放行，无论赋值与否、赋了什么值，都能通过验证。参见上面的“两步验证参数”部分
+- `CanNotHas`，无条件屏蔽此参数，只要赋了值（包括 None 值）就会报错。参见上面的“两步验证参数”部分
 
-每种 parameter 都有自己的支持设置选项(specification)，具体如下：
+构建 Parameter 时，可以指定一些选项(specification)。
 
-### 所有 parameter 都支持的选项
+### 大部分 Parameter 通用的选项
 - `default`         给参数设置默认值
 - `required=True`   若为 True，则此参数必须被赋值（但是不关心它是什么值，即使是 None 也无所谓）。
                     在设置了 `default` 的情况下，参数总是能通过 `required` 的检查。
@@ -283,15 +310,6 @@ Example: `Int("myint", min=1, nozero=True)`
 - `regex`       要求参数值能与这里给出的正则表达式匹配
 - `not_regex`   要求参数值不能与这里给出的正则表达式匹配（可用于剔除一些非法字符）
 
-### Datetime、Date 独有的选项
-无
-
-### Bool 独有的选项
-无  
-
 ### List 独有的选项
 - `min_len`     list 的最小长度
 - `max_len`     list 的最大长度
-
-### Dict 独有的选项
-无
