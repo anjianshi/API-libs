@@ -111,7 +111,7 @@ router.call("users.add", None, dict(category="home", profiles=[
 ```
 
 ### 两步验证参数
-```
+```python
 @router.register("customer.register", [
     Int("type"),  # 1 代表个人, 2 代表公司,
     CanHas("personal_name"),
