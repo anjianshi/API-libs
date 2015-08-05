@@ -55,7 +55,8 @@ router = Router()
 
 @router.register("math.divide", [Int("a"), Int("b", nozero=True)])
 def divide(context, arguments):
-    return arguments.a / arguments.b
+    # arguments 既可以以 object 的形式，也可以以 dict 的形式访问
+    return arguments.a / arguments["b"]
 
 # 第二个参数是传给 context 的，这里我们并没有用到 context data，所以传入 None
 router.call("math.divide", None, dict(a=10, b=5))   # return 2

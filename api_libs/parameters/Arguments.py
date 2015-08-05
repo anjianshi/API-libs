@@ -1,7 +1,21 @@
 from .Parameter import NoValue
 
 
-class Arguments:
+class ObjectDict(dict):
+    """Makes a dictionary behave like an object, with attribute-style access.
+    from tornado.util
+    """
+    def __getattr__(self, name):
+        try:
+            return self[name]
+        except KeyError:
+            raise AttributeError(name)
+
+    def __setattr__(self, name, value):
+        self[name] = value
+
+
+class Arguments(ObjectDict):
     def __init__(self, parameters, arguments):
         """验证、格式化每一个参数值，并把它们设置成此对象的 property
 
@@ -19,11 +33,7 @@ class Arguments:
         for param in parameters:
             formatted_arg = param.verify(arguments)
             if formatted_arg is not NoValue:
-                setattr(self, param.name, formatted_arg)
-
-    def has(self, name):
-        """检查当前对象中是否存在指定名称的 argument"""
-        return hasattr(self, name)
+                self[param.name] = formatted_arg
 
 
 class ArgumentsError(Exception):
