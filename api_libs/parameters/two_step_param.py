@@ -1,6 +1,6 @@
 from .Parameter import Parameter, VerifyFailed, NoValue
 
-__all__ = ["CanHas", "CantNotHas"]
+__all__ = ["CanHas", "CanNotHas"]
 
 """
 这两个 Parameter 用于参数值两段检查。
@@ -21,7 +21,7 @@ class CanHas(Parameter):
     sysrule_order = []
 
 
-class CantNotHas(Parameter):
+class CanNotHas(Parameter):
     """不允许客户端为此 parameter 赋值。
     一般用于二段验证的第二段（handler 中手动运行的那段）。把第一段中放行进来、但现在根据情况认为不应该被赋值的参数屏蔽掉。"""
 

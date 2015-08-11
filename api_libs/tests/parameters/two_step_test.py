@@ -1,5 +1,5 @@
 from unittest import TestCase
-from api_libs.parameters import CanHas, CantNotHas, VerifyFailed, NoValue, Arguments, Datetime
+from api_libs.parameters import CanHas, CanNotHas, VerifyFailed, NoValue, Arguments, Datetime
 from datetime import datetime
 
 
@@ -16,7 +16,7 @@ class TwoStepParameterTestCase(TestCase):
         self.assertEqual(param.verify(dict()), NoValue)
 
     def test_can_not_has(self):
-        param = CantNotHas("p1")
+        param = CanNotHas("p1")
 
         self.assertEqual(param.verify({}), NoValue)
         self.assertRaises(VerifyFailed, param.verify, dict(p1=1))
@@ -33,7 +33,7 @@ class TwoStepParameterTestCase(TestCase):
         arguments.future_build([Datetime("p1")])
         self.assertEqual(arguments.p1, datetime.fromtimestamp(1))
 
-        self.assertRaises(VerifyFailed, arguments.future_build, [CantNotHas("p2")])
+        self.assertRaises(VerifyFailed, arguments.future_build, [CanNotHas("p2")])
 
-        arguments.future_build([CantNotHas("p3")])
+        arguments.future_build([CanNotHas("p3")])
         self.assertTrue("p3" not in arguments)
