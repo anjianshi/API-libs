@@ -7,7 +7,7 @@ __all__ = ["Str"]
 
 class Str(Parameter):
     """default specs: trim=True, escape=True"""
-    rule_order = ["type", "escape", "trim"]
+    rule_order = ["type", "trim", "regex", "not_regex", "escape"]
 
     def rule_type(self, value):
         if type(value) is not str:
@@ -16,8 +16,20 @@ class Str(Parameter):
         return value
 
     def rule_trim(self, value):
-        """把参数值首尾的空格去掉"""
-        return value.strip() if self.specs.get("trim", True) else value
+        """把参数值首尾的空格（包括全角空格）去掉"""
+        return value.strip().strip("　") if self.specs.get("trim", True) else value
+
+    def rule_regex(self, value):
+        if "regex" in self.specs and not re.search(self.specs["regex"], value):
+            raise VerifyFailed("rule_regex: 参数 {} 不符合格式(got: {})".format(
+                self.name, value))
+        return value
+
+    def rule_not_regex(self, value):
+        if "not_regex" in self.specs and re.search(self.specs["not_regex"], value):
+            raise VerifyFailed("rule_not_regex: 参数 {} 不符合格式(got: {})".format(
+                self.name, value))
+        return value
 
     def rule_escape(self, value):
         """
@@ -44,16 +56,4 @@ class Str(Parameter):
         if "max_len" in self.specs and len(value) > self.specs["max_len"]:
             raise VerifyFailed("参数 {} 的长度不能大于 {} (got: {})".format(
                 self.name, self.specs["max_len"], value))
-        return value
-
-    def rule_regex(self, value):
-        if "regex" in self.specs and not re.search(self.specs["regex"], value):
-            raise VerifyFailed("rule_regex: 参数 {} 不符合格式(got: {})".format(
-                self.name, value))
-        return value
-
-    def rule_not_regex(self, value):
-        if "not_regex" in self.specs and re.search(self.specs["not_regex"], value):
-            raise VerifyFailed("rule_not_regex: 参数 {} 不符合格式(got: {})".format(
-                self.name, value))
         return value
