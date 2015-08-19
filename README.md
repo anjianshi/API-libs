@@ -305,6 +305,7 @@ Example: `Int("myint", min=1, nozero=True)`
 - `nozero=False` 是否允许参数值为 0
 
 ### Str 独有的选项
+- `escape=True` 是否转义特殊字符（包括特殊空白符、HTML字符、SQL LIKE 匹配字符）
 - `trim=True`   是否清除参数值两侧的空白符
 - `min_len`     字符串最小长度
 - `max_len`     字符串最大长度

@@ -53,17 +53,17 @@ class RouterTestCase(TestCase):
         self.assertRaises(APIRegisterFailed, register)
 
     def test_call(self):
-        @self.router.register("test.path", [Str("arg1", default="default_value")])
+        @self.router.register("test.path", [Str("arg1", default="default-value")])
         def fn(context, arguments):
             return dict(the_result=arguments.arg1)
 
         self.assertEqual(
-            self.router.call("test.path", None, dict(arg1="custom_value")),
-            dict(the_result="custom_value"))
+            self.router.call("test.path", None, dict(arg1="custom-value")),
+            dict(the_result="custom-value"))
 
         self.assertEqual(
             self.router.call("test.path"),
-            dict(the_result="default_value"))
+            dict(the_result="default-value"))
 
         self.assertRaises(APICallFailed, self.router.call, "test.not_exists_path")
         self.assertRaises(APICallFailed, self.router.call, 123)

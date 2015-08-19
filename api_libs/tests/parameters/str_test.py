@@ -21,7 +21,29 @@ class StrTestCase(TestCase):
             self.assertRaises(VerifyFailed,
                               param.verify, dict(param=value))
 
-    def test_tirm(self):
+    def test_escape(self):
+        value_map = {
+            # 特殊空白符
+            "\ta　　b\tc\t": " a  b c ",
+
+            # HTML 字符
+            """<html a="1" b='2'></html>""": "&lt;html a=&quot;1&quot; b=&#x27;2&#x27;&gt;&lt;/html&gt;",
+
+            # SQL 查询字符
+            "a%b_c": r"a\%b\_c"
+        }
+
+        for input, expected_output in value_map.items():
+            self.assertEqual(
+                Str("param", trim=False).verify(dict(param=input)),
+                expected_output)
+
+        for input in value_map:
+            self.assertEqual(
+                Str("param", escape=False, trim=False).verify(dict(param=input)),
+                input)
+
+    def test_trim(self):
         value = "  \t  asd  def \t \n  "
         result = "asd  def"
         self.assertEqual(
@@ -29,7 +51,7 @@ class StrTestCase(TestCase):
             result)
 
         self.assertEqual(
-            Str("param", trim=False).verify(dict(param=value)),
+            Str("param", escape=False, trim=False).verify(dict(param=value)),
             value)
 
     def test_min_len(self):
@@ -45,7 +67,7 @@ class StrTestCase(TestCase):
         self.batch_verify([], ["", "abc"], max_len=-1)
 
     def test_regex(self):
-        self.batch_verify(["x_abd", "dabbbc"], ["", "a", "dd"], regex=r"ab+")
+        self.batch_verify(["x-abd", "dabbbc"], ["", "a", "dd"], regex=r"ab+")
         self.batch_verify(
             ["ab", "abbb"], ["", "abc", "dab", "dd"], regex=r"^ab+$")
 

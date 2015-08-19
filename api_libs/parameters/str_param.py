@@ -1,12 +1,13 @@
 from .Parameter import Parameter, VerifyFailed
 import re
+import html
 
 __all__ = ["Str"]
 
 
 class Str(Parameter):
-    """default specs: trim=True"""
-    rule_order = ["type", "trim"]
+    """default specs: trim=True, escape=True"""
+    rule_order = ["type", "escape", "trim"]
 
     def rule_type(self, value):
         if type(value) is not str:
@@ -17,6 +18,19 @@ class Str(Parameter):
     def rule_trim(self, value):
         """把参数值首尾的空格去掉"""
         return value.strip() if self.specs.get("trim", True) else value
+
+    def rule_escape(self, value):
+        """
+        转义特殊字符：
+        1. 把制表符（\\t）和全角空格转换成普通空格
+        2. 转义 HTML 字符
+        3. 转义 % _ 等 SQL 查询字符（其他 SQL 字符的转义交由 ORM 来完成）
+        """
+        if self.specs.get("escape", True):
+            value = re.sub(r"\t|　", " ", value)
+            value = html.escape(value)
+            value = re.sub(r"(%|_)", r"\\\1", value)
+        return value
 
     def rule_min_len(self, value):
         """通过 min_len=n 指定字符串的最小长度"""
