@@ -30,12 +30,24 @@ class RouterTestCase(TestCase):
 
     def test_repeat_register(self):
         @self.router.register("test.path")
-        def fn(ctx, arg):
+        def fn(ctx):
             pass
 
         def register():
             @self.router.register("test.path")
-            def fn(ctx, arg):
+            def fn(ctx):
+                pass
+
+        self.assertRaises(APIRegisterFailed, register)
+
+    def test_case_insensitive_register(self):
+        @self.router.register("TestPath")
+        def fn(ctx):
+            pass
+
+        def register():
+            @self.router.register("testpath")
+            def fn(ctx):
                 pass
 
         self.assertRaises(APIRegisterFailed, register)
@@ -54,6 +66,16 @@ class RouterTestCase(TestCase):
             dict(the_result="default_value"))
 
         self.assertRaises(APICallFailed, self.router.call, "test.not_exists_path")
+        self.assertRaises(APICallFailed, self.router.call, 123)
+
+    def test_case_insensitive_call(self):
+        @self.router.register("TestPath")
+        def fn(context):
+            return "value"
+
+        self.assertEqual(self.router.call("TestPath"), "value")
+        self.assertEqual(self.router.call("testpath"), "value")
+        self.assertEqual(self.router.call("testPath"), "value")
 
     def test_call_with_no_arguments(self):
         @self.router.register("test.path")

@@ -22,10 +22,12 @@ class Router:
         :arg parameters: 此 API 的参数定义，如果不需要参数，则为 None
         :type parameters: list of ``api_libs.parameters.Parameter`` or ``None``
         """
-
         if type(path) != str:
             raise APIRegisterFailed("API path ({}) 必须是字符串".format(path))
-        elif re.search("/", path):
+
+        path = path.lower()
+
+        if re.search("/", path):
             raise APIRegisterFailed("API path 中不允许出现 '/' 字符(got: {})".format(path))
         elif path in self.handlers:
             raise APIRegisterFailed("API path ({}) 已存在，不允许重复添加".format(path))
@@ -46,6 +48,11 @@ class Router:
         return self._call_with_context(path, context_instance, arguments)
 
     def _call_with_context(self, path, context_instance, arguments={}):
+        if type(path) != str:
+            raise APICallFailed("API path ({}) 必须是字符串".format(path))
+
+        path = path.lower()
+
         if not isinstance(context_instance, self.context_cls):
             raise APICallFailed("context 类型错误（expect: {}, got: {}）".format(self.context_cls, context_instance))
         if path not in self.handlers:

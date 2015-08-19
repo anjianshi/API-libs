@@ -38,11 +38,12 @@ from api_libs import Router
 router = Router()
 
 
-@router.register("get_name")
+@router.register("getName")
 def fn(context):
     return "David"
 
-router.call("get_name")  # return "David"
+router.call("getName")  # return "David"
+router.call("getname")  # api path 不区分大小写
 ```
 
 ### 给 API handler 定义参数
