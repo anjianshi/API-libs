@@ -19,6 +19,12 @@ class Str(Parameter):
         """把参数值首尾的空格去掉"""
         return value.strip() if self.specs.get("trim", True) else value
 
+    def rule_choices(self, value):
+        if "choices" in self.specs and value not in self.specs["choices"]:
+            raise VerifyFailed("rule_choices: 参数 {} 只能为以下值 {} (got: {})".format(
+                self.name, self.specs["choices"], value))
+        return value
+
     def rule_regex(self, value):
         if "regex" in self.specs and not re.search(self.specs["regex"], value):
             raise VerifyFailed("rule_regex: 参数 {} 不符合格式(got: {})".format(

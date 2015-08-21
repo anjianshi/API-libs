@@ -307,6 +307,9 @@ Example: `Int("myint", min=1, nozero=True)`
 ### Str 独有的选项
 - `escape=True` 是否转义特殊字符（包括特殊空白符、HTML字符、SQL LIKE 匹配字符）
 - `trim=True`   是否清除参数值两侧的空白符
+- `choices`     通过一个 str 列表，指定此 param 的合法值。
+  例如 Str(choices=["me", "you"])，则客户端传上来的值只能是 "me" 或 "you"。
+  一般使用了此选项后，就没必要使用 regex / not_regex / min_len / max_len 了。
 - `regex`       要求参数值能与这里给出的正则表达式匹配
 - `not_regex`   要求参数值不能与这里给出的正则表达式匹配（可用于剔除一些非法字符）
 - `escape=True` 转义参数值中的 HTML 字符

@@ -47,6 +47,17 @@ class StrTestCase(TestCase):
             Str("param", escape=False, trim=False).verify(dict(param=value)),
             value)
 
+    def test_choices(self):
+        choices = ["you", "and", "me"]
+        param = Str("param", choices=choices)
+
+        for v in choices:
+            self.assertEqual(param.verify(dict(param=v)), v)
+
+        for v in ["him", "her", "mea", ""]:
+            self.assertRaises(VerifyFailed,
+                              param.verify, dict(param=v))
+
     def test_min_len(self):
         self.batch_verify(["", "abc"], [], min_len=0)
         self.batch_verify(["dewr", "dewrewer", "abc"], ["", "xx"],  min_len=3)
