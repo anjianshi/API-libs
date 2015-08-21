@@ -16,8 +16,8 @@ class Str(Parameter):
         return value
 
     def rule_trim(self, value):
-        """把参数值首尾的空格（包括全角空格）去掉"""
-        return value.strip().strip("　") if self.specs.get("trim", True) else value
+        """把参数值首尾的空格去掉"""
+        return value.strip() if self.specs.get("trim", True) else value
 
     def rule_regex(self, value):
         if "regex" in self.specs and not re.search(self.specs["regex"], value):
@@ -32,16 +32,9 @@ class Str(Parameter):
         return value
 
     def rule_escape(self, value):
-        """
-        转义特殊字符：
-        1. 把制表符（\\t）和全角空格转换成普通空格
-        2. 转义 HTML 字符
-        3. 转义 % _ 等 SQL 查询字符（其他 SQL 字符的转义交由 ORM 来完成）
-        """
+        """转义字符串中的 HTML 字符"""
         if self.specs.get("escape", True):
-            value = re.sub(r"\t|　", " ", value)
             value = html.escape(value)
-            value = re.sub(r"(%|_)", r"\\\1", value)
         return value
 
     def rule_min_len(self, value):

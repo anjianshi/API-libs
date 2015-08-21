@@ -307,10 +307,11 @@ Example: `Int("myint", min=1, nozero=True)`
 ### Str 独有的选项
 - `escape=True` 是否转义特殊字符（包括特殊空白符、HTML字符、SQL LIKE 匹配字符）
 - `trim=True`   是否清除参数值两侧的空白符
-- `min_len`     字符串最小长度
-- `max_len`     字符串最大长度
 - `regex`       要求参数值能与这里给出的正则表达式匹配
 - `not_regex`   要求参数值不能与这里给出的正则表达式匹配（可用于剔除一些非法字符）
+- `escape=True` 转义参数值中的 HTML 字符
+- `min_len`     字符串最小长度
+- `max_len`     字符串最大长度
 
 ### List 独有的选项
 - `min_len`     list 的最小长度

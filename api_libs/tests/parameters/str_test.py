@@ -23,14 +23,7 @@ class StrTestCase(TestCase):
 
     def test_escape(self):
         value_map = {
-            # 特殊空白符
-            "\ta　　b\tc\t": " a  b c ",
-
-            # HTML 字符
             """<html a="1" b='2'></html>""": "&lt;html a=&quot;1&quot; b=&#x27;2&#x27;&gt;&lt;/html&gt;",
-
-            # SQL 查询字符
-            "a%b_c": r"a\%b\_c"
         }
 
         for input, expected_output in value_map.items():
