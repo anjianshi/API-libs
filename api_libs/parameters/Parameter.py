@@ -75,6 +75,10 @@ class Parameter:
             p1 = Parameter("p1", required=True, default=1)
             p2 = p1.copy("p2", remove=["required"], inplace=dict(default=2, nullable=True))
             # 相当于： Parameter("p2", default=2, nullable=True)
+
+            p3 = Parameter()   # 无名称的 parameter
+            p4 = p3.copy("p4") # copy 的同时设置名称
+            p5 = p4.copy(NoValue) # copy 的同时把名称去掉
         """
         if name is None:
             name = self.name
