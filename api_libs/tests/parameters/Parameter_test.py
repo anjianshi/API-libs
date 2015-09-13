@@ -42,6 +42,11 @@ class ParameterTestCase(TestCase):
             "copy_param4",
             dict(default=20, new_spec=1, cust_spec="updated_val"))
 
+    def test_inplace(self):
+        param = Parameter("my_param", a=1, b=2, c=3)
+        param(b=4, c=5)
+        self.assertEqual(param.specs, dict(a=1, b=4, c=5))
+
     def test_verify_method_and_sysrule_default(self):
         param = Parameter("param1", default=10)
         # 1. default 的执行顺序应该在 required 前面，所以 required 不会在填充默认值之前就进行检查，导致误报。

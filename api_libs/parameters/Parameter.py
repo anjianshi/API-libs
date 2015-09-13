@@ -64,6 +64,23 @@ class Parameter:
         return self.rule_order + list(
             set(normal_rules).difference(set(self.rule_order)))
 
+    def __call__(self, **specs_to_inplace):
+        """
+        直接调用 parameter 对象，可以对其 specs 进行 inplace 操作
+        此功能可以简化对 parameter 进行 copy 的代码，使其更清晰。
+
+        例如： p.copy("new_name", inplace=dict(a=b))
+        可以变成：p.copy("new_name")(a=b)
+
+        那么为什么不直接让 copy() 方法支持传入任意 kwargs 作为 inplace 值？
+        因为这样可能和 copy() 函数的其他参数产生冲突，而且这种冲突一旦发生，很难被察觉，容易引起潜在 bug。
+
+        注意：此操作会直接修改当前 parameter
+        """
+        for key, value in specs_to_inplace.items():
+            self.specs[key] = value
+        return self
+
     def copy(self, name=None, remove=[], inplace={}):
         """以当前 Parameter 为基础，复制出一个新的 Parameter
 
