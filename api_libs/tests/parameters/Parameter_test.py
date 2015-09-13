@@ -42,7 +42,7 @@ class ParameterTestCase(TestCase):
             "copy_param4",
             dict(default=20, new_spec=1, cust_spec="updated_val"))
 
-    def test_inplace(self):
+    def test_inplace_by_call(self):
         param = Parameter("my_param", a=1, b=2, c=3)
         param(b=4, c=5)
         self.assertEqual(param.specs, dict(a=1, b=4, c=5))
