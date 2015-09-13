@@ -42,6 +42,13 @@ class ParameterTestCase(TestCase):
             "copy_param4",
             dict(default=20, new_spec=1, cust_spec="updated_val"))
 
+        # copy & inplace by __call__
+        param = Parameter("my_param", a=1, b=2)
+        test_copy(
+            param(b=3, c=4),
+            "my_param", dict(a=1, b=3, c=4)
+        )
+
         # 对传给 copy inplace 参数的 dict 进行修改，不应该影响已经写入到 parameter specs 里的值
         # 创建 parameter 和执行 inplace_by_call 操作时，都是以 **kwargs 的形式传入 specs，天然的相当于重新构建了一个 dict，因此原 dict 的修改不会影响到 parameter 的 specs
         # 但是 copy() 里的 inplace 参数是直接把一个 dict 传给它，那么就要保证 copy() 操作完成后，如果这个 dict 被修改，parameter 的 specs 并不会跟着被改变
@@ -52,11 +59,6 @@ class ParameterTestCase(TestCase):
         param2_copy = param2.copy("param2_copy", inplace=inplace)
         inplace["b"] = 5
         self.assertEqual(param2_copy.specs, dict(a=1, b=3, c=4))
-
-    def test_inplace_by_call(self):
-        param = Parameter("my_param", a=1, b=2)
-        param(b=3, c=4)
-        self.assertEqual(param.specs, dict(a=1, b=3, c=4))
 
     def test_verify_method_and_sysrule_default(self):
         param = Parameter("param1", default=10)
