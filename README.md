@@ -284,7 +284,7 @@ Example: `Int("myint", min=1, nozero=True)`
 - `Decimal`，要求参数值是 int 或 float
 - `Str`，要求参数值是 str
 - `Bool` 要求参数值是 True 或 False
-- `Datetime`，要求参数值是合法的 timestamp (int / float)，最终会返回一个 python datetime.datetime 对象
+- `Datetime`，要求参数值是合法的 timestamp (int / float)，最终会返回一个 python datetime.datetime 对象（也支持直接传入一个 datetime.datetime 对象）
 - `Date`，和 Datetime 一样，不过返回的是 datetime.date 对象
 - `List`，要求参数值是指定类型的一组数据
 - `Dict`，要求参数值是 dict，且符合 format spec 中定义的格式
