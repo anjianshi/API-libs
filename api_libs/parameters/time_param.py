@@ -9,10 +9,13 @@ class Datetime(Parameter):
     rule_order = ["type"]
 
     def rule_type(self, value):
-        if type(value) not in [int, float]:
-            raise VerifyFailed("参数 {} 的值必须是 timestamp (int / float)，got {} {}".format(
-                self.name, type(value), value))
-        return datetime.datetime.fromtimestamp(value)
+        if type(value) is datetime.datetime:
+            return value
+        elif type(value) in [int, float]:
+            return datetime.datetime.fromtimestamp(value)
+        else:
+            raise VerifyFailed("参数 {} 的值必须是 timestamp (int / float / datetime.datetime)，got {} {}".format(
+                               self.name, type(value), value))
 
 
 class Date(Parameter):
@@ -20,7 +23,10 @@ class Date(Parameter):
     rule_order = ["type"]
 
     def rule_type(self, value):
-        if type(value) not in [int, float]:
-            raise VerifyFailed("参数 {} 的值必须是 timestamp (int / float)，got {} {}".format(
-                self.name, type(value), value))
-        return datetime.date.fromtimestamp(value)
+        if type(value) is datetime.date:
+            return value
+        elif type(value) in [int, float]:
+            return datetime.date.fromtimestamp(value)
+        else:
+            raise VerifyFailed("参数 {} 的值必须是 timestamp (int / float / datetime.date)，got {} {}".format(
+                               self.name, type(value), value))
