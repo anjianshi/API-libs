@@ -25,9 +25,10 @@ class Arguments(ObjectDict):
         :arg Parameter[] parameters: 某个 API 的参数定义
         :arg dict arguments: 调用者传进来的参数值。dict(name=value, ...)
         """
+        parameters = list(parameters)
         param_names = set([param.name for param in parameters])
-        if len(param_names) != len(list(parameters)):
-            raise Exception("不允许重复定义参数")
+        if len(param_names) != len(parameters):
+            raise Exception("不允许重复定义参数({})".format([param.name for param in parameters]))
 
         if not allow_unexpected:
             unexpected_args = set(arguments).difference(param_names)
