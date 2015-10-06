@@ -26,7 +26,7 @@ class Arguments(ObjectDict):
         :arg dict arguments: 调用者传进来的参数值。dict(name=value, ...)
         """
         param_names = set([param.name for param in parameters])
-        if len(param_names) != len(parameters):
+        if len(param_names) != len(list(parameters)):
             raise Exception("不允许重复定义参数")
 
         if not allow_unexpected:
