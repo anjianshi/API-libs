@@ -78,6 +78,8 @@ class TornadoAdapter:
         arguments = self.extract_arguments(req_handler)
         result = self.api_router.call(api_path, req_handler, arguments)
         output = self.output_formatter(result)
+
+        req_handler.set_header("Content-Type", "application/json")
         req_handler.write(output)
 
     def extract_arguments(self, req_handler):
