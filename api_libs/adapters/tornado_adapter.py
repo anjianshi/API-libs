@@ -16,6 +16,11 @@ class TornadoContext(Context):
         super().__init__(router)
 
 
+def dump_json(result, req_handler):
+    req_handler.set_header("Content-Type", "application/json")
+    return json.dumps(result)
+
+
 class TornadoAdapter:
     """将 API 系统与 Tornado app 进行适配。
     通过此对象把 HTTP Request 转换成 API 调用；再把调用结果输出给客户端
@@ -34,7 +39,7 @@ class TornadoAdapter:
 
     adapter 的使用方法见 README.md 中的示例代码
     """
-    def __init__(self, api_router=None, output_formatter=json.dumps):
+    def __init__(self, api_router=None, output_formatter=dump_json):
         """
         :arg api_router: 指定要把 adapter 绑定到哪个 api router。
           若未指定此此参数，adapter 会自己创建一个。
@@ -42,6 +47,7 @@ class TornadoAdapter:
 
         :arg output_formatter: RequestHandler 会调用此函数对 API 的返回值进行格式化后，再把得到的内容输出给客户端。
           默认是转换成 JSON，你可以自己指定一个函数，来转换成其他格式。
+          此函数会接收到两个参数： api result 和 RequestHandler 对象。第二个参数用来输出自定义的 HTTP Header
         """
         self.output_formatter = output_formatter
         self.api_router = api_router or Router(TornadoContext)
@@ -77,9 +83,7 @@ class TornadoAdapter:
         """
         arguments = self.extract_arguments(req_handler)
         result = self.api_router.call(api_path, req_handler, arguments)
-        output = self.output_formatter(result)
-
-        req_handler.set_header("Content-Type", "application/json")
+        output = self.output_formatter(result, req_handler)
         req_handler.write(output)
 
     def extract_arguments(self, req_handler):
