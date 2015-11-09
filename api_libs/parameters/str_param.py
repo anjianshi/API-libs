@@ -6,8 +6,14 @@ __all__ = ["Str"]
 
 
 class Str(Parameter):
-    """default specs: trim=True, escape=True"""
     rule_order = ["type", "trim", "regex", "not_regex", "escape"]
+
+    def spec_defaults(self):
+        return dict(
+            super().spec_defaults(),
+            trim=True,
+            escape=True
+        )
 
     def rule_type(self, value):
         if type(value) is not str:
@@ -17,7 +23,7 @@ class Str(Parameter):
 
     def rule_trim(self, value):
         """把参数值首尾的空格去掉"""
-        return value.strip() if self.specs.get("trim", True) else value
+        return value.strip() if self.specs["trim"] else value
 
     def rule_choices(self, value):
         if "choices" in self.specs and value not in self.specs["choices"]:
@@ -39,7 +45,7 @@ class Str(Parameter):
 
     def rule_escape(self, value):
         """转义字符串中的 HTML 字符"""
-        if self.specs.get("escape", True):
+        if self.specs["escape"]:
             value = html.escape(value)
         return value
 

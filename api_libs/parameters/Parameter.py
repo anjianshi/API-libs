@@ -44,14 +44,10 @@ class Parameter:
     Parameter 默认只让 sysrule 处理 NoValue 和 None 值，如果 sysrule 都执行完毕后，参数值仍然是 NoValue 或 None，那么整个检查行为到此结束，
     把 NoValue / None 作为最终的结果，后面的普通 rule 不再被执行。
     这样设计使得普通 rule 里就不用包含处理 NoValue 和 None 的代码了，节省了精力。因为普通的 rule 不太可能会为 NoValue 和 None 准备什么处理逻辑，即使碰到了也顶多是跳过执行而已。
-
-    ----------
-
-    default specs: required=True, nullable=False
     """
     def __init__(self, name=NoValue, **specs):
         self.name = name
-        self.specs = specs
+        self.specs = dict(self.spec_defaults(), **specs)
         self._normal_rules = self._sorted_normal_rules()
 
     def _sorted_normal_rules(self):
@@ -122,6 +118,15 @@ class Parameter:
     # 各普通 rule 的执行顺序
     rule_order = []
 
+    def spec_defaults(self):
+        """返回各 specs 的默认值（如果有的话）
+        子类重写此方法时，不要忘了继承父类里的值。方法：
+        return dict(super().spec_defaults(), spec_in_child=value))"""
+        return dict(
+            required=True,
+            nullable=False
+        )
+
     def sysrule_default(self, value):
         """如果某个参数没有被赋值，则给予其一个默认值"""
         if value is NoValue and "default" in self.specs:
@@ -130,13 +135,13 @@ class Parameter:
 
     def sysrule_required(self, value):
         """若为 true，则参数必须被赋值（但是不关心它是什么值，即使是 None 也无所谓）"""
-        if self.specs.get("required", True) and value is NoValue:
+        if self.specs["required"] and value is NoValue:
             raise VerifyFailed("缺少必要参数：{}".format(self.name))
         return value
 
     def sysrule_nullable(self, value):
         """是否允许参数值为 None。
         没被赋值的参数它的值自然不是 None，所以可以通过这个 rule 的检查"""
-        if not self.specs.get("nullable", False) and value is None:
+        if not self.specs["nullable"] and value is None:
             raise VerifyFailed("参数 {} 不允许为 None".format(self.name))
         return value

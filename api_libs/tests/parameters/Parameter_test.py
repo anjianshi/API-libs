@@ -7,12 +7,12 @@ class ParameterTestCase(TestCase):
     def test_define_parameter(self):
         param1 = Parameter("param1")
         self.assertEqual(param1.name, "param1")
-        self.assertEqual(param1.specs, {})
+        self.assertEqual(param1.specs, Parameter.spec_defaults(None))
 
         param2_specs = dict(nullable=True, default=10, cust_spec="cust_val")
         param2 = Parameter("param2", **param2_specs)
         self.assertEqual(param2.name, "param2")
-        self.assertEqual(param2.specs, param2_specs)
+        self.assertEqual(param2.specs, dict(Parameter.spec_defaults(None), **param2_specs))
 
     def test_copy(self):
         param = Parameter(
@@ -33,20 +33,20 @@ class ParameterTestCase(TestCase):
 
         # remove specs
         test_copy(param.copy("copy_param3", remove=["cust_spec"]),
-                  "copy_param3", dict(default=20, nullable=True))
+                  "copy_param3", dict(Parameter.spec_defaults(None), default=20, nullable=True))
 
         # inplace specs
         test_copy(
             param.copy("copy_param4", remove=["nullable"],
                        inplace=dict(new_spec=1, cust_spec="updated_val")),
             "copy_param4",
-            dict(default=20, new_spec=1, cust_spec="updated_val"))
+            dict(Parameter.spec_defaults(None), default=20, new_spec=1, cust_spec="updated_val"))
 
         # copy & inplace by __call__
         param = Parameter("my_param", a=1, b=2)
         test_copy(
             param(b=3, c=4),
-            "my_param", dict(a=1, b=3, c=4)
+            "my_param", dict(Parameter.spec_defaults(None), a=1, b=3, c=4)
         )
 
         # 对传给 copy inplace 参数的 dict 进行修改，不应该影响已经写入到 parameter specs 里的值
@@ -58,7 +58,7 @@ class ParameterTestCase(TestCase):
         inplace = dict(b=3, c=4)
         param2_copy = param2.copy("param2_copy", inplace=inplace)
         inplace["b"] = 5
-        self.assertEqual(param2_copy.specs, dict(a=1, b=3, c=4))
+        self.assertEqual(param2_copy.specs, dict(Parameter.spec_defaults(None), a=1, b=3, c=4))
 
     def test_verify_method_and_sysrule_default(self):
         param = Parameter("param1", default=10)
@@ -153,10 +153,10 @@ class NoNameParameterTestCase(TestCase):
     def test_define(self):
         param = Parameter()
         self.assertEqual(param.name, NoValue)
-        self.assertEqual(param.specs, {})
+        self.assertEqual(param.specs, Parameter.spec_defaults(None))
 
         param = Parameter(nullable=True)
-        self.assertEqual(param.specs, dict(nullable=True))
+        self.assertEqual(param.specs, dict(Parameter.spec_defaults(None), nullable=True))
 
     def test_copy(self):
         param1 = Parameter()
@@ -164,7 +164,7 @@ class NoNameParameterTestCase(TestCase):
         # noname => noname
         copy1 = param1.copy(inplace=dict(nullable=True))
         self.assertEqual(copy1.name, NoValue)
-        self.assertEqual(copy1.specs, dict(nullable=True))
+        self.assertEqual(copy1.specs, dict(Parameter.spec_defaults(None), nullable=True))
 
         # noname => has name
         copy2 = param1.copy("new_name")

@@ -6,11 +6,14 @@ __all__ = ["Int", "Decimal"]
 
 
 class Number(Parameter):
-    """各数值类型 Parameter 的基类，不建议直接使用
+    """各数值类型 Parameter 的基类，不建议直接使用"""
 
-    default specs:
-        nozero=False
-    """
+    def spec_defaults(self):
+        return dict(
+            super().spec_defaults(),
+            nozero=False
+        )
+
     def rule_min(self, value):
         """通过 min=n 指定最小值"""
         if "min" in self.specs and value < self.specs["min"]:
@@ -27,7 +30,7 @@ class Number(Parameter):
 
     def rule_nozero(self, value):
         """通过 nozero=true/false 指定是否允许等于 0"""
-        if self.specs.get("nozero", False) and value == 0:
+        if self.specs["nozero"] and value == 0:
             raise VerifyFailed("参数 {} 不能等于 0".format(self.name))
         return value
 
