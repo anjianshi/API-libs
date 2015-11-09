@@ -113,7 +113,7 @@ class TornadoAdapterCustomFormatterTestCase(BaseTestCase):
     def get_adapter(self):
         return TornadoAdapter(output_formatter=self.format)
 
-    def format(self, value):
+    def format(self, value, req_handler):
         """这个自定义的 foramtter 会把所有值都转换成如下字符串"""
         return "format result"
 
