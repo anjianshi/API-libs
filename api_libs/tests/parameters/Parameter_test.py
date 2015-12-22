@@ -45,8 +45,16 @@ class ParameterTestCase(TestCase):
         # copy & inplace by __call__
         param = Parameter("my_param", a=1, b=2)
         test_copy(
+            param("p2"),
+            "p2", dict(Parameter.spec_defaults(None), a=1, b=2)
+        )
+        test_copy(
             param(b=3, c=4),
             "my_param", dict(Parameter.spec_defaults(None), a=1, b=3, c=4)
+        )
+        test_copy(
+            param("p2", b=3, c=4),
+            "p2", dict(Parameter.spec_defaults(None), a=1, b=3, c=4)
         )
 
         # 对传给 copy inplace 参数的 dict 进行修改，不应该影响已经写入到 parameter specs 里的值
