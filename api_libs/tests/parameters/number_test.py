@@ -1,5 +1,5 @@
 from unittest import TestCase
-from api_libs.parameters import Int, Decimal, VerifyFailed
+from api_libs.parameters import Int, Float, Decimal, VerifyFailed
 import decimal as dec
 
 
@@ -14,7 +14,7 @@ class NumTestCase:
         # 通过此方法可以检查两个 value 是否数值相等，类型也相同
         # 例如 Decimal 和 int，通过 == 操作符没法检查类型
         # 如果用 is 操作符，更是永远返回 False
-        # 所以之后创建一个方法，手动检查类型
+        # 所以只好创建一个方法，手动检查类型
         self.assertEqual(value, expect_value)
         self.assertEqual(type(value), type(expect_value))
 
@@ -61,6 +61,23 @@ class IntTestCase(TestCase, NumTestCase):
                 VerifyFailed, param.verify, dict(param=value))
 
 
+class FloatTestCase(TestCase, NumTestCase):
+    param_cls = Float
+    value_cls = float
+
+    def test_type(self):
+        param = Float("param")
+
+        for value in [10, 11.1, 0.1]:
+            self.match(param.verify(dict(param=value)), float(value))
+
+        for value in [dec.Decimal(5),
+                      float("nan"), float("inf"), float("-inf"),
+                      "10", "0.1", True, [1]]:
+            self.assertRaises(
+                VerifyFailed, param.verify, dict(param=value))
+
+
 class DecimalTestCase(TestCase, NumTestCase):
     param_cls = Decimal
     value_cls = dec.Decimal
@@ -68,10 +85,12 @@ class DecimalTestCase(TestCase, NumTestCase):
     def test_type(self):
         param = Decimal("param")
 
-        for value in [10, dec.Decimal(1), 11.1]:
-            self.match(param.verify(dict(param=value)), dec.Decimal(value))
+        for value in ["10", "0.1", 10, dec.Decimal(1), 11.1]:
+            self.match(param.verify(dict(param=value)), dec.Decimal(str(value)))
+
+        self.match(param.verify(dict(param=0.1)), dec.Decimal('0.1'))
 
         for value in [dec.Decimal("nan"), dec.Decimal("inf"),
-                      dec.Decimal("-inf"), "10", True, [1]]:
+                      dec.Decimal("-inf"), "nan", "abc", True, [1]]:
             self.assertRaises(
                 VerifyFailed, param.verify, dict(param=value))

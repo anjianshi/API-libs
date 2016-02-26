@@ -2,7 +2,7 @@ from .Parameter import Parameter, VerifyFailed
 import math
 import decimal as dec
 
-__all__ = ["Int", "Decimal"]
+__all__ = ["Int", "Float", "Decimal"]
 
 
 class Number(Parameter):
@@ -39,22 +39,42 @@ class Int(Number):
     rule_order = ["type"]
 
     def rule_type(self, value):
-        if type(value) != int or math.isnan(value) or math.isinf(value):
+        if type(value) is not int or math.isnan(value) or math.isinf(value):
             raise VerifyFailed("参数 {} 必须是合法的 int (got: {} {})".format(
                 self.name, type(value), value))
         return value
+
+
+class Float(Number):
+    rule_order = ["type"]
+
+    def rule_type(self, value):
+        if type(value) not in [int, float] or math.isnan(value) or math.isinf(value):
+            raise VerifyFailed("参数 {} 必须是合法的 int 或 float (got: {} {})".format(
+                self.name, type(value), value))
+        # 如果传入的数值是 int，此操作会将其强制转换成 float
+        return float(value)
 
 
 class Decimal(Number):
     rule_order = ["type"]
 
     def rule_type(self, value):
-        """此字段接受一个 int 或 float 值，并把它转换成 Decimal"""
-        if type(value) not in [int, float, dec.Decimal]:
-            raise VerifyFailed("参数 {} 的原始值必须是 int、float、Decimal, got {} {}".format(
+        if type(value) is str:
+            try:
+                dec_value = dec.Decimal(value)
+            except dec.InvalidOperation:
+                raise VerifyFailed("参数 {} 的值({})不符合格式".format(self.name, value))
+        elif type(value) is int:
+            dec_value = dec.Decimal(value)
+        elif type(value) is float:
+            # float 在转换成 decimal 前，必须先转换成字符串。不然会有精度损失。例如： Decimal(0.18) 会得到 0.179999...
+            dec_value = dec.Decimal(str(value))
+        elif type(value) is dec.Decimal:
+            dec_value = value
+        else:
+            raise VerifyFailed("参数 {} 的原始值必须是 str、int、float、Decimal, got {} {}".format(
                 self.name, type(value), value))
-
-        dec_value = dec.Decimal(value)
 
         if math.isnan(dec_value) or math.isinf(dec_value):
             raise VerifyFailed("参数 {} 的值({})不符合格式".format(self.name, value))

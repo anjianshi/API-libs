@@ -28,7 +28,7 @@ pip install api_libs
 nosetests
 ```
 
-                
+
 ## Example
 
 ### 基本用法
@@ -72,7 +72,7 @@ users = {
 
 
 @router.register("users.add", [
-    Str("category"), 
+    Str("category"),
     # 至少提供一个 user_name；每个 user_name 至少为 3 个字符
     # notice: 指定 List 的 type 时，不用给 parameter 设置 name
     List("user_names", type=Str(min_len=3), min_len=1)
@@ -281,7 +281,8 @@ Example: `Int("myint", min=1, nozero=True)`
 
 系统提供了以下类型的 parameter：
 - `Int`，要求传递进来的参数值必须是 int 类型
-- `Decimal`，要求参数值是 int 或 float
+- `Float`，要求参数是 int 或 float
+- `Decimal`，要求参数值是 str、int、float 或 Decimal。此 parameter 返回 python Decimal 对象，用于需要高精度小数的环境
 - `Str`，要求参数值是 str
 - `Bool` 要求参数值是 True 或 False
 - `Datetime`，要求参数值是合法的 timestamp (int / float)，最终会返回一个 python datetime.datetime 对象（也支持直接传入一个 datetime.datetime 对象）
@@ -299,7 +300,7 @@ Example: `Int("myint", min=1, nozero=True)`
                     在设置了 `default` 的情况下，参数总是能通过 `required` 的检查。
 - `nullable=False`  是否允许此参数的值为 None
 
-### Int、Decimal 独有的选项
+### Int、Float、Decimal 独有的选项
 - `min`          此参数允许的最小数值
 - `max`          此参数允许的最大数值
 - `nozero=False` 是否允许参数值为 0
