@@ -117,6 +117,7 @@ class TornadoAdapter:
                 if type(arguments) is not dict:
                     raise ValueError()
             except ValueError:
+                # Python 3.5 里，json 抛出的异常变成了 JSONDecodeError，不过它貌似是 ValueError 的子类，所以依然可以这样捕获
                 raise HTTPError(400, "arguments 格式不合法: " + raw_arguments)
         else:
             arguments = {}
