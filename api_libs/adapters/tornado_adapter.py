@@ -93,6 +93,7 @@ class TornadoAdapter:
         可以用来提供 values 的渠道有三种，分别对应不同的情况：
             1. POST body
                把 arguments json 作为 POST body
+               并将 HTTP Header 中的 Content-Type 设为 application/json
                大部分情况下，使用这种模式
 
             2. POST field
@@ -108,8 +109,16 @@ class TornadoAdapter:
         之所以强制使用 JSON 的格式，不支持传统的 query string 和 POST form-data，
         是因为传统的 form 处理起来问题太多，而且只支持字符串类型；JSON 的数据结构则简单、清晰，类型丰富，可以减少很多麻烦。
         """
-        raw_arguments = req_handler.get_argument("arguments", default=None) or \
-            req_handler.request.body.strip().decode()
+        raw_arguments = req_handler.get_argument("arguments", default=None)
+
+        if raw_arguments is None and req_handler.request.headers.get('Content-Type') == 'application/json':
+            try:
+                raw_arguments = req_handler.request.body.strip().decode()
+            except UnicodeDecodeError:
+                # request body 中包含了无法识别的字符（例如二进制数据）
+                raise HTTPError(400, "arguments 格式不合法")
+        else:
+            raw_arguments = ""
 
         if len(raw_arguments):
             try:
