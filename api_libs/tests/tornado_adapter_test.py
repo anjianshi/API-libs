@@ -1,9 +1,10 @@
 from tornado.web import Application
 from tornado.testing import AsyncHTTPTestCase
 import json
+import re
 import urllib.parse
 from api_libs.adapters.tornado_adapter import TornadoAdapter
-from api_libs.parameters import *
+from api_libs.parameters import Int
 from api_libs.route import Router, Context
 
 
@@ -66,20 +67,46 @@ class TornadoAdapterTestCase(BaseTestCase):
         resp = self.fetch("/test.path", method="DELETE")
         self.assertEqual(resp.code, 405)
 
+    def test_context(self):
+        @self.adapter.api_router.register("test.path")
+        def fn(context):
+            self.assertIsInstance(context.req_handler, self.adapter.RequestHandler)
+            return True
+
+        resp = self.fetch("/test.path")
+        self.assertEqual(self.parse_resp(resp), True)
+
     def test_arguments_parse(self):
         @self.adapter.api_router.register(
             "test.path", [Int("argx"), Int("argy", default=5)])
         def fn(context, arguments):
             return {"data": arguments.argx * arguments.argy}
 
+        headers = {"Content-Type": "application/json"}
+
         # arguments in post body
-        resp = self.fetch("/test.path", method="POST", body='{"argx": 20}')
+        resp = self.fetch("/test.path", method="POST", body='{"argx": 20}', headers=headers)
         self.assertEqual(self.parse_resp(resp), {"data": 100})
+
+        # invalid binary bytes in post body
+        body = b'abc\x89'
+        resp = self.fetch("/test.path", method="POST", body=body, headers=headers)
+        self.assertNotEqual(re.search('arguments 中包含非法字符', resp.body.decode()), None)
 
         # arguments in post form data
         body = urllib.parse.urlencode(dict(arguments='{"argx": 30}'))
         resp = self.fetch("/test.path", method="POST", body=body)
         self.assertEqual(self.parse_resp(resp), {"data": 150})
+
+        # post form data with no arguments
+        @self.adapter.api_router.register(
+            "test.path.no_arg")
+        def fn2(context):
+            return {"data": context.req_handler.get_body_arguments("argx")[0]}
+
+        body = urllib.parse.urlencode(dict(argx="hello"))
+        resp = self.fetch("/test.path.no_arg", method="POST", body=body)
+        self.assertEqual(self.parse_resp(resp), {"data": "hello"})
 
         # arguments in url query string
         resp = self.fetch('/test.path?arguments={"argx":40}')
@@ -90,15 +117,6 @@ class TornadoAdapterTestCase(BaseTestCase):
         resp = self.fetch('/test.path?arguments={"argx":50}',
                           method="POST", body='{"argx": 1, "argy": 2}')
         self.assertEqual(self.parse_resp(resp), {"data": 250})
-
-        def test_context(self):
-            @self.adapter.api_router.register("test.path")
-            def fn(context):
-                self.assertIsInstance(context.req_handler, self.adapter.RequestHandler)
-                return True
-
-            resp = self.fetch("/test.path")
-            self.assertEqual(self.parse_resp(resp), True)
 
     def test_bind_router(self):
         """测试 bind_router() 方法是否正常工作"""
@@ -143,7 +161,7 @@ class TornadoAdapterCustomRouterTestCase(BaseTestCase):
         adapter = TornadoAdapter(api_router=router)
 
         @adapter.api_router.register("test.path.2")
-        def fn(context):
+        def fn2(context):
             self.assertIsInstance(context, MyContext)
             return True
 
@@ -156,6 +174,3 @@ class TornadoAdapterCustomRouterTestCase(BaseTestCase):
 
         resp = self.fetch("/test.path.2")
         self.assertEqual(self.parse_resp(resp), True)
-
-
-
