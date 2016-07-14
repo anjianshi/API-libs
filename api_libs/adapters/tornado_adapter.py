@@ -1,4 +1,5 @@
-from tornado.web import RequestHandler, HTTPError
+from tornado.web import RequestHandler, HTTPError, asynchronous
+import tornado
 import json
 from ..route import Router, Context
 
@@ -53,9 +54,14 @@ class TornadoAdapter:
         self.api_router = api_router or Router(TornadoContext)
 
         class AdaptedRequestHandler(RequestHandler):
+            # 为了支持 tornado.gen.coroutine，handler 以 asynchronous callback 的形式运行。
+            # 默认只要 handler 一返回，便结束此请求。
+            # 如果 handler 是一个 tornado.gen.coroutine，则等它运行完毕后才结束请求
+            @asynchronous
             def get(handler_self, api_path):
                 self.handle_request(handler_self, api_path)
 
+            @asynchronous
             def post(handler_self, api_path):
                 self.handle_request(handler_self, api_path)
 
@@ -83,8 +89,20 @@ class TornadoAdapter:
         """
         arguments = self.extract_arguments(req_handler)
         result = self.api_router.call(api_path, req_handler, arguments)
-        output = self.output_formatter(result, req_handler)
-        req_handler.write(output)
+
+        def finish(result):
+            output = self.output_formatter(result, req_handler)
+            req_handler.write(output)
+            req_handler.finish()
+
+        # 对于 tornado.gen.coroutine 类型的 handler，待其执行结束后才结束请求
+        if isinstance(result, tornado.concurrent.Future):
+            future = result
+            tornado.ioloop.IOLoop.current().add_future(
+                future,
+                lambda future: finish(future.result()))
+        else:
+            finish(result)
 
     def extract_arguments(self, req_handler):
         """从 HTTP Request 中提取出 arguments

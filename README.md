@@ -275,6 +275,29 @@ tornado.ioloop.IOLoop.current().start()
 # GET /api/a.b.c  => Response: {"result": true}
 ```
 
+### 使用 Tornado coroutine
+```python
+import tornado
+from tornado.httpclient import AsyncHTTPClient
+
+@adapter.api_router.register("a.b.c")
+@tornado.gen.coroutine
+def fn1(context):
+    http_client = AsyncHTTPClient()
+    response = yield http_client.fetch("https://github.com")
+    return dict(github_index=resonse.body.decode())
+
+
+# 通过 router 调用其他 coroutine 类型的 handler 时，当前 handler 必须也是 coroutine 类型的
+@adapter.api_router.register("d.e.f")
+@tornado.gen.coroutine
+def fn2(context):
+    result = yield router.call("a.b.c")
+    result["extra"] = "from fn2"
+    return result
+```
+提示： Tornado 貌似自带防护机制，用同一个浏览器（在多个标签页内）同时访问同一个 API时，即使使用了 coroutine，它们也仍然会线性地一个接一个地被响应，而不是并发响应。
+
 
 ## 参数(parameter)定义
 Example: `Int("myint", min=1, nozero=True)`

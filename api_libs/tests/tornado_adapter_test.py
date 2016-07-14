@@ -1,5 +1,7 @@
 from tornado.web import Application
 from tornado.testing import AsyncHTTPTestCase
+from tornado.httpclient import AsyncHTTPClient
+import tornado
 import json
 import re
 import urllib.parse
@@ -117,6 +119,28 @@ class TornadoAdapterTestCase(BaseTestCase):
         resp = self.fetch('/test.path?arguments={"argx":50}',
                           method="POST", body='{"argx": 1, "argy": 2}')
         self.assertEqual(self.parse_resp(resp), {"data": 250})
+
+    def test_coroutine(self):
+        @self.adapter.api_router.register("normal_path.one")
+        def normal(context):
+            return "hello by normal_one"
+
+        @self.adapter.api_router.register("async_path.one")
+        @tornado.gen.coroutine
+        def async_one(context):
+            url = self.get_url("/normal_path.one")
+            http_client = AsyncHTTPClient()
+            response = yield http_client.fetch(url)
+            return json.loads(response.body.decode()) + " and async_one"
+
+        @self.adapter.api_router.register("async_path.two")
+        @tornado.gen.coroutine
+        def async_two(context):
+            result = yield self.adapter.api_router.call("async_path.one")
+            return result + " and async_two"
+
+        resp = self.fetch('/async_path.two')
+        self.assertEqual(self.parse_resp(resp), "hello by normal_one and async_one and async_two")
 
     def test_bind_router(self):
         """测试 bind_router() 方法是否正常工作"""
