@@ -1,6 +1,6 @@
 API-libs: 一套灵活的组件，帮助你快速搭建起一个 API 系统
 
-Python 3.4 only
+Python 3.4+
 
 ## API 系统的结构
 - `router`        通过它来注册、调用 API handler
