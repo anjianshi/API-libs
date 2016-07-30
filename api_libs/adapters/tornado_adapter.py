@@ -54,9 +54,11 @@ class TornadoAdapter:
         self.api_router = api_router or Router(TornadoContext)
 
         class AdaptedRequestHandler(RequestHandler):
-            # 为了支持 tornado.gen.coroutine，handler 以 asynchronous callback 的形式运行。
-            # 默认只要 handler 一返回，便结束此请求。
-            # 如果 handler 是一个 tornado.gen.coroutine，则等它运行完毕后才结束请求
+            """
+            为了支持 tornado.gen.coroutine，handler 以 asynchronous callback 的形式运行。
+            默认只要 handler 一返回，便结束此请求。
+            如果 handler 是一个 tornado.gen.coroutine，则等它运行完毕后才结束请求（见 TornadoAdapter.handle_request 中的代码）
+            """
             @asynchronous
             def get(handler_self, api_path):
                 self.handle_request(handler_self, api_path)
@@ -88,21 +90,26 @@ class TornadoAdapter:
             - arguments 通过 query string 或 POST body 指定，详见 `extract_arguments()` 方法
         """
         arguments = self.extract_arguments(req_handler)
-        result = self.api_router.call(api_path, req_handler, arguments)
-
-        def finish(result):
-            output = self.output_formatter(result, req_handler)
-            req_handler.write(output)
-            req_handler.finish()
+        result = self.call_api(req_handler, api_path, arguments)
 
         # 对于 tornado.gen.coroutine 类型的 handler，待其执行结束后才结束请求
         if isinstance(result, tornado.concurrent.Future):
             future = result
             tornado.ioloop.IOLoop.current().add_future(
                 future,
-                lambda future: finish(future.result()))
+                lambda future: self.finish_request(req_handler, future.result()))
         else:
-            finish(result)
+            self.finish_request(req_handler, result)
+
+    def call_api(self, req_handler, api_path, arguments):
+        """这里把对 api 的调用单独拆分出一个方法，是为了让使用者能方便地对此行为进行扩展
+        例如在执行调用前进行一些准备操作"""
+        return self.api_router.call(api_path, req_handler, arguments)
+
+    def finish_request(self, req_handler, result):
+        output = self.output_formatter(result, req_handler)
+        req_handler.write(output)
+        req_handler.finish()
 
     def extract_arguments(self, req_handler):
         """从 HTTP Request 中提取出 arguments
