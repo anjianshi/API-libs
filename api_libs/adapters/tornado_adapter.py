@@ -135,8 +135,8 @@ class TornadoAdapter:
         是因为传统的 form 处理起来问题太多，而且只支持字符串类型；JSON 的数据结构则简单、清晰，类型丰富，可以减少很多麻烦。
         """
         raw_arguments = req_handler.get_argument("arguments", default="")
-
-        if raw_arguments == "" and req_handler.request.headers.get('Content-Type') == 'application/json':
+        # 这里不能直接用 == "application/json" 进行判断，因为有些客户端（例如 React Native）会在原 Content-Type 后面加上额外的 ;charset=utf-8 之类的文字。
+        if raw_arguments == "" and req_handler.request.headers.get('Content-Type').startswith('application/json'):
             try:
                 raw_arguments = req_handler.request.body.strip().decode()
             except UnicodeDecodeError:
