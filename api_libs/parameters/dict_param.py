@@ -1,4 +1,5 @@
 from .Parameter import Parameter, VerifyFailed, NoValue
+from .utils import ObjectDict
 
 __all__ = ["Dict"]
 
@@ -38,4 +39,4 @@ class Dict(Parameter):
             formatted_value = param.verify(value)
             if formatted_value is not NoValue:
                 formatted_dict[param.name] = formatted_value
-        return formatted_dict
+        return ObjectDict(formatted_dict)

@@ -10,7 +10,10 @@ class DictTestCase(TestCase):
         self.assertRaises(Exception, Dict, "param", format=Int("param"))
 
         param = Dict("param", format=[Int("p1"), Str("p2")])
-        self.assertEqual(param.verify(dict(param=dict(p1=1, p2="abc"))), dict(p1=1, p2="abc"))
+        result = param.verify(dict(param=dict(p1=1, p2="abc")))
+        self.assertEqual(result, dict(p1=1, p2="abc"))
+        self.assertEqual(result["p1"], 1)
+        self.assertEqual(result.p2, "abc")
 
         # 如果有某个子项不是必须的，且没有赋值，那么它不会出现在最终返回的 dict 里
         param = Dict("param", format=[Int("p1", required=False), Str("p2")])

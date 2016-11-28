@@ -117,9 +117,10 @@ from api_libs.parameters import Dict, Int
     Dict("to_point", format=[Int("x"), Int("y")]),
 ])
 def move(args):
+    # dict parameters 的值和 args 一样，既可以以 object 的形式，也可以以 dict 的形式访问
     print("move something from {},{} to {},{}".format(
         args.from_point["x"]), args.from_point["y"],
-        args.to_point["x"]), args.to_point["y"],
+        args.to_point.x), args.to_point.y,
     )
 ----
 
