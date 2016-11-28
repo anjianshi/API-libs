@@ -1,6 +1,7 @@
 from unittest import TestCase
 from ..route import Router, Context, RouteRegisterFailed, RouteCallFailed
 from ..parameters import Str
+from ..interface import interface
 
 
 class RouterTestCase(TestCase):
@@ -18,6 +19,16 @@ class RouterTestCase(TestCase):
         def fn(context, args):
             pass
         self.assertTrue(callable(fn))
+
+    def test_register_with_interface(self):
+        @self.router.register("test.path")
+        @interface([Str("arg1")])
+        def fn(context, args):
+            return args.arg1
+        self.assertEqual(
+            self.router.call("test.path", None, dict(arg1="hello")),
+            "hello"
+        )
 
     def test_illegal_register(self):
         def register(path):
