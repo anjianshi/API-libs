@@ -28,9 +28,9 @@ class TornadoAdapter:
 
     Attributes:
 
-    * api_router: 此 adapter 绑定的 api router。通过把 router 绑定到 adapter，使其中的 API 能通过 HTTP Request 进行调用。
+    * router: 此 adapter 绑定的 router。通过把 router 绑定到 adapter，使其中的 interface 能通过 HTTP Request 进行调用。
 
-    * RequestHandler: 经过特殊调整，能够把 HTTP Request 转换成 API 调用的 RequestHandler。
+    * RequestHandler: 经过特殊调整，能够把 HTTP Request 转换成 interface 调用的 RequestHandler。
       应把它加入 tornado application 的 handler 列表里，分配一个 url pattern
 
       注意：必须保证 url pattern 中有且只有一个 regex group，代表 api path
@@ -40,24 +40,24 @@ class TornadoAdapter:
 
     adapter 的使用方法见 README.md 中的示例代码
     """
-    def __init__(self, api_router=None, output_formatter=dump_json):
+    def __init__(self, router=None, output_formatter=dump_json):
         """
-        :arg api_router: 指定要把 adapter 绑定到哪个 api router。
+        :arg router: 指定要把 adapter 绑定到哪个 router。
           若未指定此此参数，adapter 会自己创建一个。
-          注意，adapter 要求与它绑定的 api router 的 Context 类型能够接收一个 tornado RequestHandler 实例作为 context data
+          注意，adapter 要求与它绑定的 router 的 Context 类型能够接收一个 tornado RequestHandler 实例作为 context data
 
-        :arg output_formatter: RequestHandler 会调用此函数对 API 的返回值进行格式化后，再把得到的内容输出给客户端。
+        :arg output_formatter: RequestHandler 会调用此函数对 interface 的返回值进行格式化后，再把得到的内容输出给客户端。
           默认是转换成 JSON，你可以自己指定一个函数，来转换成其他格式。
-          此函数会接收到两个参数： api result 和 RequestHandler 对象。第二个参数用来输出自定义的 HTTP Header
+          此函数会接收到两个参数： call result 和 RequestHandler 对象。第二个参数用来输出自定义的 HTTP Header
         """
         self.output_formatter = output_formatter
-        self.api_router = api_router or Router(TornadoContext)
+        self.router = router or Router(TornadoContext)
 
         class AdaptedRequestHandler(RequestHandler):
             """
             为了支持 tornado.gen.coroutine，handler 以 asynchronous callback 的形式运行。
-            默认只要 handler 一返回，便结束此请求。
-            如果 handler 是一个 tornado.gen.coroutine，则等它运行完毕后才结束请求（见 TornadoAdapter.handle_request 中的代码）
+            默认只要 interface 一返回，便结束此请求。
+            如果 interface 是一个 tornado.gen.coroutine，则等它运行完毕后才结束请求（见 TornadoAdapter.handle_request 中的代码）
             """
             @asynchronous
             def get(handler_self, api_path):
@@ -69,30 +69,30 @@ class TornadoAdapter:
 
         self.RequestHandler = AdaptedRequestHandler
 
-    def bind_router(self, api_router):
-        """将 adapter 绑定到另一个 api router 上
-        注意，与新的 router 绑定后，原来的 router 中注册的 API handlers，并不会转移到新的 api router 里。
-        如果有需要，请手动进行转移（new_router.handlers = {path:handler for path, handler in old_router.handlers.items()}）
+    def bind_router(self, router):
+        """将 adapter 绑定到另一个 router 上
+        注意，与新的 router 绑定后，原来的 router 中注册的 interfaces，并不会转移到新的 router 里。
+        如果有需要，请手动进行转移（new_router.interfaces = {path:interface for path, interface in old_router.interfaces.items()}）
         """
-        self.api_router = api_router
+        self.router = router
 
-    def handle_request(self, req_handler, api_path):
-        """进行 HTTP Request 与 API Call 与 JSON Response 之间的转换
+    def handle_request(self, req_handler, route_path):
+        """进行 HTTP Request 与 interface Call 与 JSON Response 之间的转换
 
         HTTP 请求的格式约定
-        要调用一个 API，需要三样东西：
-            1. API path
+        要调用一个 interface，需要三样东西：
+            1. route path
             2. context data
             3. arguments
         通过 HTTP 请求调用 API 时，
-            - API path 通过 URL 指定
+            - route path 通过 URL 指定
             - context data 会被设置为当前的 tornado RequestHandler，不需要手动指定
             - arguments 通过 query string 或 POST body 指定，详见 `extract_arguments()` 方法
         """
         arguments = self.extract_arguments(req_handler)
-        result = self.call_api(req_handler, api_path, arguments)
+        result = self.call_interface(req_handler, route_path, arguments)
 
-        # 对于 tornado.gen.coroutine 类型的 handler，待其执行结束后才结束请求
+        # 对于 tornado.gen.coroutine 类型的 interface，待其执行结束后才结束请求
         if isinstance(result, tornado.concurrent.Future):
             future = result
             tornado.ioloop.IOLoop.current().add_future(
@@ -101,10 +101,10 @@ class TornadoAdapter:
         else:
             self.finish_request(req_handler, result)
 
-    def call_api(self, req_handler, api_path, arguments):
-        """这里把对 api 的调用单独拆分出一个方法，是为了让使用者能方便地对此行为进行扩展
+    def call_interface(self, req_handler, route_path, arguments):
+        """这里把对 interface 的调用单独拆分出一个方法，是为了让使用者能方便地对此行为进行扩展
         例如在执行调用前进行一些准备操作"""
-        return self.api_router.call(api_path, req_handler, arguments)
+        return self.router.call(route_path, req_handler, arguments)
 
     def finish_request(self, req_handler, result):
         output = self.output_formatter(result, req_handler)

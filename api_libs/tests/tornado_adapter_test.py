@@ -32,10 +32,10 @@ class TornadoAdapterTestCase(BaseTestCase):
         return TornadoAdapter()
 
     def test_request_adapte(self):
-        """测试是否能正常地根据 HTTP Request 调用对应的 API"""
+        """测试是否能正常地根据 HTTP Request 调用对应的 interface"""
         result = dict(called=False)
 
-        @self.adapter.api_router.register("test.path")
+        @self.adapter.router.register("test.path")
         def fn(context):
             result["called"] = True
 
@@ -43,9 +43,9 @@ class TornadoAdapterTestCase(BaseTestCase):
         self.assertEqual(result["called"], True)
 
     def test_response_formatter(self):
-        """测试是否能正确地把 API 的返回值格式化并输出
+        """测试是否能正确地把 interface 的返回值格式化并输出
         默认会把返回值转换成 JSON 格式"""
-        @self.adapter.api_router.register("test.path")
+        @self.adapter.router.register("test.path")
         def fn(context):
             return dict(data=[1, 2, 3])
 
@@ -53,7 +53,7 @@ class TornadoAdapterTestCase(BaseTestCase):
         self.assertEqual(self.parse_resp(resp), dict(data=[1, 2, 3]))
 
     def test_method_support(self):
-        @self.adapter.api_router.register("test.path")
+        @self.adapter.router.register("test.path")
         def fn(context):
             return True
 
@@ -70,7 +70,7 @@ class TornadoAdapterTestCase(BaseTestCase):
         self.assertEqual(resp.code, 405)
 
     def test_context(self):
-        @self.adapter.api_router.register("test.path")
+        @self.adapter.router.register("test.path")
         def fn(context):
             self.assertIsInstance(context.req_handler, self.adapter.RequestHandler)
             return True
@@ -79,10 +79,10 @@ class TornadoAdapterTestCase(BaseTestCase):
         self.assertEqual(self.parse_resp(resp), True)
 
     def test_arguments_parse(self):
-        @self.adapter.api_router.register(
+        @self.adapter.router.register(
             "test.path", [Int("argx"), Int("argy", default=5)])
-        def fn(context, arguments):
-            return {"data": arguments.argx * arguments.argy}
+        def fn(context, args):
+            return {"data": args.argx * args.argy}
 
         headers = {"Content-Type": "application/json"}
 
@@ -101,7 +101,7 @@ class TornadoAdapterTestCase(BaseTestCase):
         self.assertEqual(self.parse_resp(resp), {"data": 150})
 
         # post form data with no arguments
-        @self.adapter.api_router.register(
+        @self.adapter.router.register(
             "test.path.no_arg")
         def fn2(context):
             return {"data": context.req_handler.get_body_arguments("argx")[0]}
@@ -121,11 +121,11 @@ class TornadoAdapterTestCase(BaseTestCase):
         self.assertEqual(self.parse_resp(resp), {"data": 250})
 
     def test_coroutine(self):
-        @self.adapter.api_router.register("normal_path.one")
+        @self.adapter.router.register("normal_path.one")
         def normal(context):
             return "hello by normal_one"
 
-        @self.adapter.api_router.register("async_path.one")
+        @self.adapter.router.register("async_path.one")
         @tornado.gen.coroutine
         def async_one(context):
             url = self.get_url("/normal_path.one")
@@ -133,10 +133,10 @@ class TornadoAdapterTestCase(BaseTestCase):
             response = yield http_client.fetch(url)
             return json.loads(response.body.decode()) + " and async_one"
 
-        @self.adapter.api_router.register("async_path.two")
+        @self.adapter.router.register("async_path.two")
         @tornado.gen.coroutine
         def async_two(context):
-            result = yield self.adapter.api_router.call("async_path.one")
+            result = yield self.adapter.router.call("async_path.one")
             return result + " and async_two"
 
         resp = self.fetch('/async_path.two')
@@ -145,10 +145,10 @@ class TornadoAdapterTestCase(BaseTestCase):
     def test_bind_router(self):
         """测试 bind_router() 方法是否正常工作"""
         router = Router()
-        self.assertNotEqual(self.adapter.api_router, router)
+        self.assertNotEqual(self.adapter.router, router)
 
         self.adapter.bind_router(router)
-        self.assertEqual(self.adapter.api_router, router)
+        self.assertEqual(self.adapter.router, router)
 
 
 class TornadoAdapterCustomFormatterTestCase(BaseTestCase):
@@ -160,7 +160,7 @@ class TornadoAdapterCustomFormatterTestCase(BaseTestCase):
         return "format result"
 
     def test_customer_formatter(self):
-        @self.adapter.api_router.register("test.path")
+        @self.adapter.router.register("test.path")
         def fn(context):
             return [1, 2, 3]
 
@@ -182,9 +182,9 @@ class TornadoAdapterCustomRouterTestCase(BaseTestCase):
             self.assertIsInstance(context, MyContext)
             return True
 
-        adapter = TornadoAdapter(api_router=router)
+        adapter = TornadoAdapter(router=router)
 
-        @adapter.api_router.register("test.path.2")
+        @adapter.router.register("test.path.2")
         def fn2(context):
             self.assertIsInstance(context, MyContext)
             return True

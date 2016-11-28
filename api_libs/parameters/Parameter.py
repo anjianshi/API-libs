@@ -13,7 +13,7 @@ class VerifyFailed(Exception):
 
 class Parameter:
     """
-    定义一个 API 参数。
+    定义一个 interface 参数。
 
     Attributes:
 

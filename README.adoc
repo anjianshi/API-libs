@@ -1,0 +1,477 @@
+API-libs: 一套灵活的组件，帮助你快速搭建起一个 API 系统
+
+Python 3.4+
+
+
+== 安装
+
+[source,bash]
+----
+pip install api_libs
+----
+
+
+== 测试
+[source,bash]
+----
+nosetests
+----
+
+
+'''
+
+
+== 组件结构
+API-libs 包括三个层面的内容：
+
+* *interface / parameter*         定义一个对参数的类型和格式有更明确要求的函数
+* *router / context*              集中管理 interface，将多个 interface 组成一个完整的系统
+* *adapter*                       对外提供服务，使得可以通过发起 HTTP 请求或其他方式来调用 router。
+
+每一个层面都依赖于更低层面的内容，但不依赖比它高的层面的内容。 +
+可以根据需要，选择要使用到哪个级别。
+
+
+== interface
+普通的 Python 函数中，我们只能控制参数的名称和默认值，不能控制各个参数的类型和格式，需要手动写代码去检查。 +
+这带来了很多重复性工作，而且容易出现疏漏。
+
+通过把函数定义成 interface，我们可以给它指定一个 parameter 列表，里面明确的定义了对各个参数的要求。 +
+例如必须是字符串，长度不能大于 5。
+
+在调用 interface 时，会根据这个参数列表对传入的参数值进行检查，对于不合法的输入，会抛出异常。
+
+
+=== 定义并调用一个 interface
+[source,python]
+----
+from api_libs.interface import interface
+
+
+@interface()
+def fn():
+    return "hello, world"
+
+text = fn()     # text == "hello, world"
+----
+以上代码定义了一个最基本的 interface，这里并没有指定参数列表。 +
+调用 interface 就跟调用普通函数一样。
+
+=== 定义并调用一个有参数列表的 interface
+（关于`参数定义`的内容，详见下面的`参数定义`部分）
+
+[source,python]
+----
+from api_libs.interface import interface
+from api_libs.parameters import Int
+
+
+# 把参数定义传给 interface decorator
+@interface([
+    Int("a", min=1, max=5),
+    Int("b", nozero=True)
+])
+def sum(args):
+    # 指定了参数列表的 interface function，必须接收一个名为 args 的 kwarg，
+    # 它里面存放着调用此 interface 时传进来的参数值。
+    # （此时这些值已经经过了格式检查）
+    # args 既可以以 object 的形式，也可以以 dict 的形式访问
+    return args.a + args["b"]
+
+
+# 调用 interface 时，通过一个 dict 来传入参数值
+sum(dict(a=3, b=8))    # 11
+sum(dict(a=5, b=0))    # 参数 b 不符合 nozero 的要求，报错
+----
+注意，在为 interface 定义参数时，我们将“参数”称之为 parameter； +
+在调用 interface 并传入参数值时，我们将“参数值”称之为 argument。
+
+
+=== 使用复合型参数(List, Dict)
+[source,python]
+.List
+----
+from api_libs.interface import interface
+from api_libs.parameters import List, Int
+
+
+@interface([
+    # 这里定义的内容是：至少提供两个数字、每个数字都不能小于 1
+    # 注意: 指定 List 的 type 时，不用给 parameter 设置 name
+    List("numbers", type=Int(min=1), min_len=2)
+])
+def sum(args):
+    return sum(args.numbers)
+
+sum(dict(numbers=[1, 2, 3]))      # 6
+----
+
+[source,python]
+.Dict
+----
+from api_libs.interface import interface
+from api_libs.parameters import Dict, Int
+
+@interface([
+    Dict("from_point", format=[Int("x"), Int("y")]),
+    Dict("to_point", format=[Int("x"), Int("y")]),
+])
+def move(args):
+    print("move something from {},{} to {},{}".format(
+        args.from_point["x"]), args.from_point["y"],
+        args.to_point["x"]), args.to_point["y"],
+    )
+----
+
+[source,python]
+.List(format=Dict())
+----
+from api_libs.interface import interface
+from api_libs.parameters import List, Dict, Str, Int
+
+users = {
+    # category: [ {user1_profile}, {user2_profile},  ]
+}
+
+
+@interface([
+    Str("category"),
+    List("profiles", type=Dict(
+        format=[
+            Str("name"),
+            Int("age"),
+            Str("address", required=False),
+        ]
+    ))
+])
+def add_users(args):
+    users[args.category] = args.profiles
+    return users
+
+add_users(dict(
+    category="home",
+    profiles=[
+        dict(name="David", age=18, address="Tokyo"),
+        dict(name="Tom", age=20),
+    ]
+))
+# return {"home": [{"name": "David", "age": 18, address: "Tokyo"}, {"name": "Tom", "age": 20}]}
+----
+
+
+=== 两步验证参数
+[source,python]
+----
+from api_libs.interface import interface
+from api_libs.parameters import Int, Str, CanHas, CanNotHas
+
+
+@interface([
+    Int("type"),  # 1 代表个人, 2 代表公司,
+    CanHas("personal_name"),
+    CanHas("compony_name"),
+    Str("mobile")
+])
+def register_customer(args):
+    if args.type == 1:
+        args.future_build([Str("personal_name", max_len=15), CanNotHas("company_name")])
+        return dict(personal=args.personal_name, mobile=args.mobile)
+    else:
+        args.future_build([Str("company_name", max_len=30), CanNotHas("personal_name")])
+        return dict(compony=args.compony_name, mobile=args.mobile)
+
+register_customer(dict(
+    type=1,
+    personal_name="David",
+    mobile="123343"
+))
+# return dict(personal="David", mobile="123343")
+----
+
+
+== 参数(parameter)定义
+Example: `Int("myint", min=1, nozero=True)`
+
+系统提供了以下类型的 parameter：
+Int::       要求传递进来的参数值必须是 int 类型
+Float::     要求参数是 int 或 float
+Decimal::   要求参数值是 str、int、float 或 Decimal。此 parameter 返回 python Decimal 对象，用于需要高精度小数的环境
+Str::       要求参数值是 str
+Bool::      要求参数值是 True 或 False
+Datetime::  要求参数值是合法的 timestamp (int / float)，最终会返回一个 python datetime.datetime 对象（也支持直接传入一个 datetime.datetime 对象）
+Date::      和 Datetime 一样，不过返回的是 datetime.date 对象
+List::      要求参数值是指定类型的一组数据
+Dict::      要求参数值是 dict，且符合 format spec 中定义的格式
+CanHas::    对参数无条件放行，无论赋值与否、赋了什么值，都能通过验证。参见下面的“两步验证参数”部分
+CanNotHas:: 无条件屏蔽此参数，只要赋了值（包括 None 值）就会报错。参见下面的“两步验证参数”部分
+
+构建 Parameter 时，可以指定一些选项(specification)。
+
+=== 大部分 Parameter 通用的选项
+default::         给参数设置默认值
+required=True::   若为 True，则此参数必须被赋值（但是不关心它是什么值，即使是 None 也无所谓）。
+                  在设置了 `default` 的情况下，参数总是能通过 `required` 的检查。
+nullable=False::  是否允许此参数的值为 None
+
+=== Int、Float、Decimal 独有的选项
+min::          此参数允许的最小数值
+max::          此参数允许的最大数值
+nozero=False:: 是否允许参数值为 0
+
+=== Str 独有的选项
+escape=True::  是否转义特殊字符（包括特殊空白符、HTML字符、SQL LIKE 匹配字符）
+trim=True::    是否清除参数值两侧的空白符
+choices::
+    通过一个 str 列表，指定此 param 的合法值。 +
+    例如 Str(choices=["me", "you"])，则客户端传上来的值只能是 "me" 或 "you"。 +
+    一般使用了此选项后，就没必要使用 regex / not_regex / min_len / max_len 了。
+regex::        要求参数值能与这里给出的正则表达式匹配
+not_regex::    要求参数值不能与这里给出的正则表达式匹配（可用于剔除一些非法字符）
+escape=True::  转义参数值中的 HTML 字符
+min_len::      字符串最小长度
+max_len::      字符串最大长度
+
+=== List 独有的选项
+min_len::     list 的最小长度
+max_len::     list 的最大长度
+
+
+
+'''
+
+
+== router
+通过 router 可以集中管理一系列 interface，只要把这些 interface 都注册到 router 中， +
+之后只要通过这个 router 对象，就能调用所有的 interface，而不用去引入并调用那个实际的函数了。 +
+
+router 还提供了一个 `context` 的概念。 +
+每次通过 router 调用一个 interface 时，都会由 router 生成一个 context 对象。 +
+这个对象里存放着与此次调用相关的上下文信息，还可以提供一些辅助方法，帮助 interface 更容易地完成任务。
+
+通过 router 调用一个 interface 时，这个 interface 还可以更进一步调用另一个 interface，此时，之前生成的 context 对象会被流传下去，传递给下一个 interface。
+
+context 可以有多种类型，不同类型的 context 对象会提供不同的信息和方法，适用于不同的任务。 +
+每个 router 都会绑定一种 context 类型。 +
+因为有了 context 的存在，在通过 router 调用 interface 时，除了要传入参数值，还要传入 context 初始化所需的数据。
+
+=== router 的基本用法
+[source,python]
+----
+from api_libs.route import Router
+from api_libs.parameters import Str
+from api_libs.interface import interface
+
+router = Router()
+
+
+# 若传递给 router 的是普通的 function，它会自动被转换成 interface。
+# 通过 router 调用的 function 必须接收一个名为 context 的 kwarg
+@router.register("getName")
+def fn(context):
+    return "David"
+
+router.call("getName")  # return "David"
+router.call("getname")  # route path 不区分大小写
+
+
+# 在注册时，可以顺便指定 interface 的参数列表
+# （若传给 router 的是一个已经定义好的 interface，则不用也不支持指定参数列表）
+@router.register("sayHello", [Str("name")])
+def fn2(context, args):
+    return "Hello, " + args.name
+
+# 和直接调用 interface 时一样，用一个 dict 传递参数值
+# 第二个参数是用来初始化 context 的，这里我们并没有用到 context data，所以传入 None
+router.call("sayHello", None, dict(name="John"))
+
+
+# 定义函数时带上 context kwarg 可以让此 interface 既能直接调用又能通过 router 调用
+@interface([Str("name")])
+def fn3(args, context=None):
+    return "Hello, " + args.name
+
+router.register("sayHello2")(fn3)
+
+# 以下两种方式都能成功调用
+router.call("sayHello2", None, dict(name="Smith"))
+fn3(dict(name="Smith"))
+----
+
+=== 在一个 interface 中调用另一个 interface
+[source,python]
+----
+class Player:
+    def __init__():
+        self.money = 1000
+        self.props = ["sword"]
+
+players = {
+    "David": Player(),
+    "Tom": Player()
+}
+
+
+@router.register("props.buy", [Str("player"), Str("props_name")])
+def fn1(context, args):
+    player = players[args.player]
+    consume_result = router.call("player.consume", None, dict(player=args.player, money=100))
+    if consume_result:
+        player.props.append(args.props_name)
+        return True
+    else:
+        return False
+
+
+@router.register("player.consume", [Str("player"), Int("money", min=1)])
+def fn2(context, args):
+    player = players[args.player]
+    if player.money > args.money:
+        player.money -= args.money
+        return True
+    else:
+        return False
+
+router.call("props.buy", None, dict(player="Tom", props_name="boots"))  # return True
+----
+
+=== 使用 context
+[source,python]
+----
+class Player:
+    def __init__():
+        self.money = 1000
+        self.props = ["sword"]
+
+players = {
+    "David": Player(),
+    "Tom": Player()
+}
+
+
+@router.register("props.buy", [Str("props_name")])
+def fn1(context, args):
+    # 和上个例子相比，这里改为通过 context 来提供 player 信息
+    player = context.data["player"]
+    # 使用 context.call() 而不是 router.call()，这样当前的 context 信息就能被传递给下一个 API
+    consume_result = context.call("player.consume", dict(money=100))
+    if consume_result:
+        player.props.append(args.props_name)
+        return True
+    else:
+        return False
+
+
+@router.register("player.consume", [Int("money", min=1)])
+def fn2(context, args):
+    player = context.data["player"]
+    if player.money > args.money:
+        player.money -= args.money
+        return True
+    else:
+        return False
+
+router.call("props.buy", dict(player=player["Tom"]), dict(props_name="boots"))  # return True
+----
+
+=== 使用自定义的 Context 类型
+上面的例子用的是默认的 Context，它提供的功能很有限。实际上通过 context 可以做非常多的事情。 +
+我们可以根据需要，自己定义一个 Context 类型，传给 Router。
+
+[source,python]
+----
+from api_libs import Router, Context
+from api_libs.parameters import *
+
+
+class Player:
+    def __init__():
+        self.money = 1000
+        self.props = ["sword"]
+
+players = {
+    "David": Player(),
+    "Tom": Player()
+}
+
+
+class PlayerContext(Context):
+    def __init__(self, router, player_name):
+        super().__init__(router)
+        self.player = players[player_name]
+
+router = Router(PlayerContext)
+
+
+@router.register("player.consume", [Int("money", min=1)])
+def fn2(context, arguments):
+    # router 绑定了我们自定义的 context，因此不用再访问 context.data["player"]，而是直接用 context.player
+    if context.player.money > arguments.money:
+        context.player.money -= arguments.money
+        return True
+    else:
+        return False
+
+# 传递 context 初始化信息的步骤也得到了简化
+router.call("player.consume", "Tom", dict(money=100))   # return True
+----
+
+
+'''
+
+
+== adapter
+interface / router 本身不响应 HTTP 请求。如果想把 API 以 Web 服务的形式提供出来，就需要用到 adapter。 +
+它可以把 HTTP 请求转换为对 interface 的调用，再把调用结果以 JSON 的形式输出给客户端。
+
+目前 API-libs 只提供基于 Tornado 的 adapter。
+你也可以参考它自行实现一个 adapter。
+
+
+=== 使用 Tornado Adapter
+[source,python]
+----
+from API-libs.adapters.tornado_adapter import TornadoAdapter
+from tornado.web import Application
+
+# 实例化 adapter
+adapter = TornadoAdapter()
+
+# 把 interface 注册在 adapter 下属的 router 中
+# 这样这个 interface 才能被客户端所调用
+@adapter.router.register("a.b.c")
+def fn(context):
+    return dict(result=True)
+
+# 把 adapter 提供的 RequestHandler 放入 tornado application
+application = Application([
+    ("/api/(.+)", adapter.RequestHandler),
+])
+application.listen(8888)
+tornado.ioloop.IOLoop.current().start()
+
+# GET /api/a.b.c  => Response: {"result": true}
+----
+
+=== 使用 Tornado coroutine
+[source,python]
+----
+import tornado
+from tornado.httpclient import AsyncHTTPClient
+
+@adapter.router.register("a.b.c")
+@tornado.gen.coroutine
+def fn1(context):
+    http_client = AsyncHTTPClient()
+    response = yield http_client.fetch("https://github.com")
+    return dict(github_index=resonse.body.decode())
+
+
+# 通过 router 调用其他 coroutine 类型的 interface 时，当前 handler 必须也是 coroutine 类型的
+@adapter.api_router.register("d.e.f")
+@tornado.gen.coroutine
+def fn2(context):
+    result = yield router.call("a.b.c")
+    result["extra"] = "from fn2"
+    return result
+----
+提示： Tornado 貌似自带防护机制，用同一个浏览器（在多个标签页内）同时访问同一个 API 时，即使使用了 coroutine，它们也仍然会线性地一个接一个地被响应，而不是并发响应。

@@ -1,6 +1,6 @@
 from unittest import TestCase
-from ..route import Router, Context, APIRegisterFailed, APICallFailed
-from ..parameters import *
+from ..route import Router, Context, RouteRegisterFailed, RouteCallFailed
+from ..parameters import Str
 
 
 class RouterTestCase(TestCase):
@@ -15,7 +15,7 @@ class RouterTestCase(TestCase):
 
     def test_register_with_parameters(self):
         @self.router.register("test.path", [Str("arg1")])
-        def fn(context, arguments):
+        def fn(context, args):
             pass
         self.assertTrue(callable(fn))
 
@@ -26,7 +26,7 @@ class RouterTestCase(TestCase):
                 pass
 
         for value in [True, 1, None, "ab/d"]:
-            self.assertRaises(APIRegisterFailed, register, value)
+            self.assertRaises(RouteRegisterFailed, register, value)
 
     def test_repeat_register(self):
         @self.router.register("test.path")
@@ -38,7 +38,7 @@ class RouterTestCase(TestCase):
             def fn(ctx):
                 pass
 
-        self.assertRaises(APIRegisterFailed, register)
+        self.assertRaises(RouteRegisterFailed, register)
 
     def test_case_insensitive_register(self):
         @self.router.register("TestPath")
@@ -50,12 +50,12 @@ class RouterTestCase(TestCase):
             def fn(ctx):
                 pass
 
-        self.assertRaises(APIRegisterFailed, register)
+        self.assertRaises(RouteRegisterFailed, register)
 
     def test_call(self):
         @self.router.register("test.path", [Str("arg1", default="default-value")])
-        def fn(context, arguments):
-            return dict(the_result=arguments.arg1)
+        def fn(context, args):
+            return dict(the_result=args.arg1)
 
         self.assertEqual(
             self.router.call("test.path", None, dict(arg1="custom-value")),
@@ -65,8 +65,8 @@ class RouterTestCase(TestCase):
             self.router.call("test.path"),
             dict(the_result="default-value"))
 
-        self.assertRaises(APICallFailed, self.router.call, "test.not_exists_path")
-        self.assertRaises(APICallFailed, self.router.call, 123)
+        self.assertRaises(RouteCallFailed, self.router.call, "test.not_exists_path")
+        self.assertRaises(RouteCallFailed, self.router.call, 123)
 
     def test_case_insensitive_call(self):
         @self.router.register("TestPath")
@@ -81,13 +81,7 @@ class RouterTestCase(TestCase):
         @self.router.register("test.path")
         def fn(context):
             return "some_value"
-
         self.assertEqual(self.router.call("test.path"), "some_value")
-
-        # 未设置 parameters 的 API 在调用时不允许传入参数值
-        self.assertRaises(APICallFailed,
-                          self.router.call,
-                          "test.path", None, dict(arg1="xyz"))
 
     def test_context(self):
         @self.router.register("test.path")
