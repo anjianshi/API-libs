@@ -20,12 +20,13 @@ class Router:
             # path: interface
         }
 
-    def register(self, path, parameters=None):
+    def register(self, path, parameters=None, bound=False):
         """通过这个 decorator 注册 interface。
         可以传入一个普通函数，此 decorator 会自动将其转换为 interface；也可以传入一个已经生成好的 interface。
 
         :arg string path: interface 对应的 route path
-        :arg parameters: 只在传入的是普通函数时有效, 指定其参数定义，如果不需要参数，则为 None。
+        :arg parameters: 只在传入的是普通函数（也就是不是 interface）时有效, 指定其参数定义，如果不需要参数，则为 None。
+        :arg parameters: 只在传入的是普通函数（也就是不是 interface）时有效，指明当前传入的是 function 还是 bound method。
         :type parameters: list of ``api_libs.parameters.Parameter`` or ``None``
         """
         if type(path) != str:
@@ -42,7 +43,7 @@ class Router:
             if isinstance(interface_or_fn, Interface):
                 interface = interface_or_fn
             else:
-                interface = self.interface_cls(interface_or_fn, parameters)
+                interface = self.interface_cls(interface_or_fn, parameters, bound)
 
             self.interfaces[path] = interface
             return interface
