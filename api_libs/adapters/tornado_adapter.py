@@ -23,8 +23,8 @@ def dump_json(result, req_handler):
 
 
 class TornadoAdapter:
-    """将 API 系统与 Tornado app 进行适配。
-    通过此对象把 HTTP Request 转换成 API 调用；再把调用结果输出给客户端
+    """将 router 与 Tornado app 进行适配。
+    通过此对象把 HTTP Request 转换成 interface 调用；再把调用结果输出给客户端
 
     Attributes:
 
@@ -33,7 +33,7 @@ class TornadoAdapter:
     * RequestHandler: 经过特殊调整，能够把 HTTP Request 转换成 interface 调用的 RequestHandler。
       应把它加入 tornado application 的 handler 列表里，分配一个 url pattern
 
-      注意：必须保证 url pattern 中有且只有一个 regex group，代表 api path
+      注意：必须保证 url pattern 中有且只有一个 regex group，代表 route path
       例如这样: (r"/api/(.+)", RequestHandler)
 
       此 RequestHandler 只响应 GET 和 POST 请求
@@ -60,12 +60,12 @@ class TornadoAdapter:
             如果 interface 是一个 tornado.gen.coroutine，则等它运行完毕后才结束请求（见 TornadoAdapter.handle_request 中的代码）
             """
             @asynchronous
-            def get(handler_self, api_path):
-                self.handle_request(handler_self, api_path)
+            def get(handler_self, route_path):
+                self.handle_request(handler_self, route_path)
 
             @asynchronous
-            def post(handler_self, api_path):
-                self.handle_request(handler_self, api_path)
+            def post(handler_self, route_path):
+                self.handle_request(handler_self, route_path)
 
         self.RequestHandler = AdaptedRequestHandler
 
@@ -84,7 +84,7 @@ class TornadoAdapter:
             1. route path
             2. context data
             3. arguments
-        通过 HTTP 请求调用 API 时，
+        通过 HTTP 请求调用 interface 时，
             - route path 通过 URL 指定
             - context data 会被设置为当前的 tornado RequestHandler，不需要手动指定
             - arguments 通过 query string 或 POST body 指定，详见 `extract_arguments()` 方法

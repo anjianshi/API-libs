@@ -9,7 +9,7 @@ class Arguments(ObjectDict):
     def _build(self, parameters, arguments, allow_unexpected=False):
         """验证、格式化每一个参数值，并把它们设置成此对象的 property
 
-        :arg Parameter[] parameters: 某个 API 的参数定义
+        :arg Parameter[] parameters: 某个 interface 的参数定义
         :arg dict arguments: 调用者传进来的参数值。dict(name=value, ...)
         """
         parameters = list(parameters)
