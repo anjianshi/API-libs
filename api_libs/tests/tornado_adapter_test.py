@@ -8,6 +8,7 @@ import urllib.parse
 from api_libs.adapters.tornado_adapter import TornadoAdapter
 from api_libs.parameters import Int
 from api_libs.route import Router, Context
+import asyncio
 
 
 class BaseTestCase(AsyncHTTPTestCase):
@@ -141,6 +142,27 @@ class TornadoAdapterTestCase(BaseTestCase):
 
         resp = self.fetch('/async_path.two')
         self.assertEqual(self.parse_resp(resp), "hello by normal_one and async_one and async_two")
+
+    # tornado application 必须使用 asyncio 才能正常完成此测试。但目前没找到方法在测试环境下让 tornado 使用 asyncio。
+    # def test_asyncio_coroutine(self):
+    #     @self.adapter.router.register("normal_path.one")
+    #     def normal(context):
+    #         return "hello by normal_one"
+
+    #     @self.adapter.router.register("async_path.one")
+    #     async def async_one(context):
+    #         url = self.get_url("/normal_path.one")
+    #         http_client = AsyncHTTPClient()
+    #         response = await http_client.fetch(url)
+    #         return json.loads(response.body.decode()) + " and async_one"
+
+    #     @self.adapter.router.register("async_path.two")
+    #     async def async_two(context):
+    #         result = await self.adapter.router.call("async_path.one")
+    #         return result + " and async_two"
+
+    #     resp = self.fetch('/async_path.two')
+    #     self.assertEqual(self.parse_resp(resp), "hello by normal_one and async_one and async_two")
 
     def test_bind_router(self):
         """测试 bind_router() 方法是否正常工作"""

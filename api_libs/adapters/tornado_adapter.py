@@ -1,6 +1,7 @@
 from tornado.web import RequestHandler, HTTPError, asynchronous
 import tornado
 import json
+import asyncio
 from ..route import Router, Context
 
 __all__ = ["TornadoAdapter"]
@@ -92,7 +93,14 @@ class TornadoAdapter:
         arguments = self.extract_arguments(req_handler)
         result = self.call_interface(req_handler, route_path, arguments)
 
-        # 对于 tornado.gen.coroutine 类型的 interface，待其执行结束后才结束请求
+        # 若被调用的 interface 是一个 asyncio coroutine，将其返回的 coroutine 对象转换成 tornado 的 Future
+        if asyncio.iscoroutine(result):
+            result = tornado.platform.asyncio.to_tornado_future(
+                asyncio.ensure_future(result)
+            )
+
+        # result 是一个 Future（例如被调用的 interface 是一个 tornado.gen.coroutine），
+        # 待其结束后才结束请求
         if isinstance(result, tornado.concurrent.Future):
             future = result
             tornado.ioloop.IOLoop.current().add_future(
