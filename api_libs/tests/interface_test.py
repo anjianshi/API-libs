@@ -1,5 +1,5 @@
 from unittest import TestCase
-from ..interface import interface, InterfaceCallFailed
+from ..interface import interface, bound_interface, InterfaceCallFailed
 from ..parameters import Str
 
 
@@ -30,3 +30,33 @@ class InterfaceTestCase(TestCase):
         def fn():
             return "content"
         self.assertRaises(TypeError, lambda: fn(dict(arg1="hello")))
+
+    def test_define_with_classmethod(self):
+        class Cls:
+            @classmethod
+            @interface()
+            def fn1(cls):
+                return cls
+
+            @classmethod
+            @bound_interface()
+            def fn2(cls):
+                return cls
+
+        self.assertRaises(InterfaceCallFailed, Cls.fn1)
+        self.assertEqual(Cls.fn2(), Cls)
+
+    def test_define_with_instance_method(self):
+        class Cls:
+            @interface()
+            def fn1(self):
+                return self
+
+            @bound_interface()
+            def fn2(self):
+                return self
+
+        o = Cls()
+
+        self.assertRaises(InterfaceCallFailed, o.fn1)
+        self.assertEqual(o.fn2(), o)

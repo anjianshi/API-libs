@@ -1,5 +1,5 @@
 import re
-from .interface import Interface
+from .interface import interface as to_interface
 
 __all__ = ["Router", "Context"]
 
@@ -7,15 +7,12 @@ __all__ = ["Router", "Context"]
 class Router:
     """通过此对象集中管理（注册、调用）interface"""
 
-    def __init__(self, context_cls=None, interface_cls=None):
+    def __init__(self, context_cls=None):
         """
         :arg context_cls: 此 router 绑定的 context 类型。不同类型的 context 提供不同的功能。
-        :arg interface_cls: 将一个普通 function 传给 router 时，要将其转换成哪个类型的 interface（若指定，必须是 Interface 的子类）
         :type context_cls: `Context` 或它的子类
-        :type interface_cls: `Interface` 或它的子类
         """
         self.context_cls = context_cls or Context
-        self.interface_cls = interface_cls or Interface
         self.interfaces = {
             # path: interface
         }
@@ -40,10 +37,10 @@ class Router:
             raise RouteRegisterFailed("route path ({}) 已存在，不允许重复添加".format(path))
 
         def wrapper(interface_or_fn):
-            if isinstance(interface_or_fn, Interface):
+            if hasattr(interface_or_fn, "__api_libs_interface"):
                 interface = interface_or_fn
             else:
-                interface = self.interface_cls(interface_or_fn, parameters, bound)
+                interface = to_interface(parameters, bound)(interface_or_fn)
 
             self.interfaces[path] = interface
             return interface
