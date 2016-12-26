@@ -103,6 +103,11 @@ class RouterTestCase(TestCase):
             self.router.call("test.path", dict(some_data=100)),
             100)
 
+        context_instance = self.router.context_cls(self.router, dict(some_data=100))
+        self.assertEqual(
+            self.router.call("test.path", context_instance),
+            100)
+
     def test_context_call(self):
         @self.router.register("test.path.a")
         def fn(context):

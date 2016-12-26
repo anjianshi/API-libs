@@ -50,9 +50,9 @@ class Router:
         """调用 interface
 
         :arg string path: 要调用的 interface 的 router path
-        :arg any context_data: 初始化 context 对象所需的数据，不同类型的 context 需要不同类型的数据
+        :arg any context_data: 可以是初始化 context 对象所需的数据，也可以直接传入 context 实例。不同类型的 context 需要不同类型的数据
         :arg dict arguments: 传给 interface 的参数值"""
-        context_instance = self.context_cls(self, context_data)
+        context_instance = context_data if isinstance(context_data, self.context_cls) else self.context_cls(self, context_data)
         return self._call_with_context(path, context_instance, arguments)
 
     def _call_with_context(self, path, context_instance, arguments={}):
