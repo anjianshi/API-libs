@@ -218,7 +218,10 @@ nullable=False::  是否允许此参数的值为 None
 === Int、Float、Decimal 独有的选项
 min::          此参数允许的最小数值
 max::          此参数允许的最大数值
-nozero=False:: 是否允许参数值为 0
+nozero=False::
+    是否允许参数值为 0。
+    对于 Int，可以通过将此选项实现“允许正数和负数，但不允许为 0”的效果。
+    对于 Float 和 Decimal，除了能实现以上效果，还可以通过将 min 设为 0、此选项设为 True，来实现“允许将值设为大于 0 的任意小数”的效果。
 
 === Str 独有的选项
 escape=True::  是否转义特殊字符（包括特殊空白符、HTML字符、SQL LIKE 匹配字符）
