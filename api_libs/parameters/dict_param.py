@@ -24,7 +24,7 @@ class Dict(Parameter):
             names.add(param.name)
 
     def rule_format(self, value):
-        if type(value) != dict:
+        if not isinstance(value, dict):
             raise VerifyFailed("参数 {} 的值必须是 dict (got: {} {})".format(self.name, type(value), value))
 
         params = self.specs.get("format")
