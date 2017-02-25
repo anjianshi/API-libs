@@ -8,7 +8,6 @@ import urllib.parse
 from api_libs.adapters.tornado_adapter import TornadoAdapter
 from api_libs.parameters import Int
 from api_libs.route import Router, Context
-import asyncio
 
 
 class BaseTestCase(AsyncHTTPTestCase):

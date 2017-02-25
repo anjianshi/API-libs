@@ -1,4 +1,4 @@
-from tornado.web import RequestHandler, HTTPError, asynchronous
+from tornado.web import RequestHandler, asynchronous
 import tornado
 import json
 import asyncio
@@ -149,7 +149,7 @@ class TornadoAdapter:
                 raw_arguments = req_handler.request.body.strip().decode()
             except UnicodeDecodeError:
                 # request body 中包含了无法识别的字符（例如二进制数据）
-                raise HTTPError(400, "arguments 中包含非法字符")
+                raise RequestHandleFailed("arguments 中包含非法字符")
 
         if len(raw_arguments):
             try:
@@ -158,7 +158,11 @@ class TornadoAdapter:
                     raise ValueError()
             except ValueError:
                 # Python 3.5 里，json 抛出的异常变成了 JSONDecodeError，不过它貌似是 ValueError 的子类，所以依然可以这样捕获
-                raise HTTPError(400, "arguments 格式不合法: " + raw_arguments)
+                raise RequestHandleFailed("arguments 格式不合法: " + raw_arguments)
         else:
             arguments = {}
         return arguments
+
+
+class RequestHandleFailed(Exception):
+    pass
