@@ -7,7 +7,7 @@ except ImportError:
 
 setup(
     name='API-libs',
-    version='0.1.10',
+    version='0.1.11',
     url='https://github.com/anjianshi/api-libs',
     license='MIT',
     author='anjianshi',
@@ -22,6 +22,6 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.6',
     ],
 )

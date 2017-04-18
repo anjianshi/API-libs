@@ -1,5 +1,5 @@
-from tornado.web import RequestHandler, asynchronous
-import tornado
+from tornado.web import RequestHandler
+import tornado.concurrent
 import json
 import asyncio
 from ..route import Router, Context
@@ -56,17 +56,14 @@ class TornadoAdapter:
 
         class AdaptedRequestHandler(RequestHandler):
             """
-            为了支持 tornado.gen.coroutine，handler 以 asynchronous callback 的形式运行。
-            默认只要 interface 一返回，便结束此请求。
-            如果 interface 是一个 tornado.gen.coroutine，则等它运行完毕后才结束请求（见 TornadoAdapter.handle_request 中的代码）
+            为了支持异步行为，handler 以 async 函数的方式运行。
+            不过 interface 并不要求非得是 async 函数，即使是普通函数，handler 也能正常处理。
             """
-            @asynchronous
-            def get(handler_self, route_path):
-                self.handle_request(handler_self, route_path)
+            async def get(handler_self, route_path):
+                await self.handle_request(handler_self, route_path)
 
-            @asynchronous
-            def post(handler_self, route_path):
-                self.handle_request(handler_self, route_path)
+            async def post(handler_self, route_path):
+                await self.handle_request(handler_self, route_path)
 
         self.RequestHandler = AdaptedRequestHandler
 
@@ -77,7 +74,7 @@ class TornadoAdapter:
         """
         self.router = router
 
-    def handle_request(self, req_handler, route_path):
+    async def handle_request(self, req_handler, route_path):
         """进行 HTTP Request 与 interface Call 与 JSON Response 之间的转换
 
         HTTP 请求的格式约定
@@ -91,33 +88,20 @@ class TornadoAdapter:
             - arguments 通过 query string 或 POST body 指定，详见 `extract_arguments()` 方法
         """
         arguments = self.extract_arguments(req_handler)
-        result = self.call_interface(req_handler, route_path, arguments)
+        result = await self.call_interface(req_handler, route_path, arguments)
+        self.finish_request(req_handler, result)
 
-        # 若被调用的 interface 是一个 asyncio coroutine，将其返回的 coroutine 对象转换成 tornado 的 Future
-        if asyncio.iscoroutine(result):
-            result = tornado.platform.asyncio.to_tornado_future(
-                asyncio.ensure_future(result)
-            )
-
-        # result 是一个 Future（例如被调用的 interface 是一个 tornado.gen.coroutine），
-        # 待其结束后才结束请求
-        if isinstance(result, tornado.concurrent.Future):
-            future = result
-            tornado.ioloop.IOLoop.current().add_future(
-                future,
-                lambda future: self.finish_request(req_handler, future.result()))
-        else:
-            self.finish_request(req_handler, result)
-
-    def call_interface(self, req_handler, route_path, arguments):
+    async def call_interface(self, req_handler, route_path, arguments):
         """这里把对 interface 的调用单独拆分出一个方法，是为了让使用者能方便地对此行为进行扩展
         例如在执行调用前进行一些准备操作"""
-        return self.router.call(route_path, req_handler, arguments)
+        ret_val = self.router.call(route_path, req_handler, arguments)
+        if asyncio.iscoroutine(ret_val) or isinstance(ret_val, tornado.concurrent.Future):
+            ret_val = await ret_val
+        return ret_val
 
     def finish_request(self, req_handler, result):
         output = self.output_formatter(result, req_handler)
         req_handler.write(output)
-        req_handler.finish()
 
     def extract_arguments(self, req_handler):
         """从 HTTP Request 中提取出 arguments

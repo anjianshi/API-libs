@@ -126,11 +126,10 @@ class TornadoAdapterTestCase(BaseTestCase):
             return "hello by normal_one"
 
         @self.adapter.router.register("async_path.one")
-        @tornado.gen.coroutine
-        def async_one(context):
+        async def async_one(context):
             url = self.get_url("/normal_path.one")
             http_client = AsyncHTTPClient()
-            response = yield http_client.fetch(url)
+            response = await http_client.fetch(url)
             return json.loads(response.body.decode()) + " and async_one"
 
         @self.adapter.router.register("async_path.two")
