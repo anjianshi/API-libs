@@ -1,6 +1,6 @@
 API-libs: 一套灵活的组件，帮助你快速搭建起一个 API 系统
 
-Python 3.6+ （tornado adapter 依赖 async await）
+Python 3.5+ （tornado adapter 依赖 async await）
 
 
 == 安装
