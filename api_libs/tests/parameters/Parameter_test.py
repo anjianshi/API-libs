@@ -1,6 +1,6 @@
 from unittest import TestCase
 from api_libs.parameters import VerifyFailed
-from api_libs.parameters.Parameter import Parameter, NoValue
+from api_libs.parameters.Parameter import Parameter, NoValue, Remove
 
 
 class ParameterTestCase(TestCase):
@@ -32,41 +32,31 @@ class ParameterTestCase(TestCase):
         test_copy(param.copy("copy_param2"), "copy_param2", param.specs)
 
         # remove specs
-        test_copy(param.copy("copy_param3", remove=["cust_spec"]),
+        test_copy(param.copy("copy_param3", cust_spec=NoValue),
+                  "copy_param3", dict(Parameter.spec_defaults(None), default=20, nullable=True))
+        test_copy(param.copy("copy_param3", cust_spec=Remove),
                   "copy_param3", dict(Parameter.spec_defaults(None), default=20, nullable=True))
 
         # inplace specs
         test_copy(
-            param.copy("copy_param4", remove=["nullable"],
-                       inplace=dict(new_spec=1, cust_spec="updated_val")),
+            param.copy("copy_param4", nullable=NoValue, new_spec=1, cust_spec="updated_val"),
             "copy_param4",
             dict(Parameter.spec_defaults(None), default=20, new_spec=1, cust_spec="updated_val"))
 
-        # copy & inplace by __call__
+        # copy by __call__
         param = Parameter("my_param", a=1, b=2)
         test_copy(
             param("p2"),
             "p2", dict(Parameter.spec_defaults(None), a=1, b=2)
         )
         test_copy(
-            param(b=3, c=4),
-            "my_param", dict(Parameter.spec_defaults(None), a=1, b=3, c=4)
+            param(a=NoValue, b=3, c=4),
+            "my_param", dict(Parameter.spec_defaults(None), b=3, c=4)
         )
         test_copy(
             param("p2", b=3, c=4),
             "p2", dict(Parameter.spec_defaults(None), a=1, b=3, c=4)
         )
-
-        # 对传给 copy inplace 参数的 dict 进行修改，不应该影响已经写入到 parameter specs 里的值
-        # 创建 parameter 和执行 inplace_by_call 操作时，都是以 **kwargs 的形式传入 specs，天然的相当于重新构建了一个 dict，因此原 dict 的修改不会影响到 parameter 的 specs
-        # 但是 copy() 里的 inplace 参数是直接把一个 dict 传给它，那么就要保证 copy() 操作完成后，如果这个 dict 被修改，parameter 的 specs 并不会跟着被改变
-        # 要不然，就会造成很多潜在的问题。
-        # 例如： p1 = Parameter().copy(inplace=dict(a=1, b=2)); p2 = p1.copy(); p2(b=3); 此时，p1 的 spec b 的值有可能也变成 3
-        param2 = Parameter("param2", a=1, b=2)
-        inplace = dict(b=3, c=4)
-        param2_copy = param2.copy("param2_copy", inplace=inplace)
-        inplace["b"] = 5
-        self.assertEqual(param2_copy.specs, dict(Parameter.spec_defaults(None), a=1, b=3, c=4))
 
     def test_verify_method_and_sysrule_default(self):
         param = Parameter("param1", default=10)
@@ -170,7 +160,7 @@ class NoNameParameterTestCase(TestCase):
         param1 = Parameter()
 
         # noname => noname
-        copy1 = param1.copy(inplace=dict(nullable=True))
+        copy1 = param1.copy(nullable=True)
         self.assertEqual(copy1.name, NoValue)
         self.assertEqual(copy1.specs, dict(Parameter.spec_defaults(None), nullable=True))
 

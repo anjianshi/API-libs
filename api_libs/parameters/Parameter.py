@@ -4,7 +4,10 @@ import inspect
 class _NoValueCls:
     def __repr__(self):
         return 'Parameter.NoValue'
+
+
 NoValue = _NoValueCls()
+Remove = NoValue            # NoValue 的别名，执行 copy() 时，若要移除一个 rule_spec，用这个名字比较容易理解
 
 
 class VerifyFailed(Exception):
@@ -60,31 +63,25 @@ class Parameter:
         return self.rule_order + list(
             set(normal_rules).difference(set(self.rule_order)))
 
-    def __call__(self, *name_args, **specs_to_inplace):
+    def __call__(self, *args, **kwargs):
         """
-        param.copy(name, inplace=dict(x=y, ...)) 的快捷方式
-        通过此操作可以简化对 parameter 进行 copy 的代码
+        param.copy(...) 的快捷方式
 
         例如：
-        p.copy(inplace=dict(required=False))   =>  p(required=False)
-        p.copy("new_name", inplace=dict(a=b))  =>  p("new_name", a=b)
-
-        那么为什么不直接让 copy() 方法支持传入任意 kwargs 作为 inplace 值？
-        因为这样可能和 copy() 函数的其他参数产生冲突，而且这种冲突一旦发生，很难被察觉，容易引起潜在 bug。
+        p.copy(required=False)   =>  p(required=False)
+        p.copy("new_name", a=b)  =>  p("new_name", a=b)
         """
-        name = name_args[0] if len(name_args) else None
-        return self.copy(name, inplace=specs_to_inplace)
+        return self.copy(*args, **kwargs)
 
-    def copy(self, name=None, remove=[], inplace={}):
+    def copy(self, name=None, **specs_to_inplace):
         """以当前 Parameter 为基础，复制出一个新的 Parameter
 
         :arg string name: 新 parameter 的名称。若不指定，则沿用原来的名称。
           对于一个有名称的 parameter，如果想在 copy 后让它变得没有名称，需要把此参数的值设成 NoValue。
-        :arg string[] remove: 在新 parameter 中剔除指定的 rule_spec。
-        :arg dict inplace: 在新 parameter 中修改原来某些 rule_spec 的值，或是插入一些原来没有的 spec
 
+        :arg specs_to_inplace: 修改、新增、移除 rule_spec 的值。通过把 value 设置成 NoValue 可以移除指定的 rule_spec。
             p1 = Parameter("p1", required=True, default=1)
-            p2 = p1.copy("p2", remove=["required"], inplace=dict(default=2, nullable=True))
+            p2 = p1.copy("p2", default=2, nullable=True, required=NoValue)
             # 相当于： Parameter("p2", default=2, nullable=True)
 
             p3 = Parameter()   # 无名称的 parameter
@@ -95,10 +92,11 @@ class Parameter:
             name = self.name
 
         specs = self.specs.copy()
-        for key in remove:
-            specs.pop(key)
-        for key, value in inplace.items():
-            specs[key] = value
+        for key, value in specs_to_inplace.items():
+            if value is NoValue:
+                specs.pop(key)
+            else:
+                specs[key] = value
 
         return type(self)(name, **specs)
 

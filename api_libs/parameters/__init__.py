@@ -1,5 +1,5 @@
 from .Arguments import Arguments, ArgumentsError
-from .Parameter import VerifyFailed, NoValue
+from .Parameter import VerifyFailed, NoValue, Remove
 
 from .number_param import *
 from .str_param import *
