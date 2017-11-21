@@ -7,12 +7,12 @@ class DatetimeBase:
     param_cls = None
 
     def batch_match(self, pairs):
-        param = self.param_cls("param")
+        param = self.param_cls('param')
         for input, output in pairs:
             self.assertEqual(param.verify(dict(param=input)), output)
 
     def batch_not_pass(self, values):
-        param = self.param_cls("param")
+        param = self.param_cls('param')
         for value in values:
             self.assertRaises(
                 VerifyFailed, param.verify, dict(param=value))
@@ -36,7 +36,7 @@ class DateTimeTestCase(TestCase, DatetimeBase):
         ])
 
         self.batch_not_pass([
-            "1", "a", True, date.today()
+            '1', 'a', True, date.today()
         ])
 
 
@@ -55,5 +55,5 @@ class DateTestCase(TestCase, DatetimeBase):
         ])
 
         self.batch_not_pass([
-            "1", "a", True
+            '1', 'a', True
         ])

@@ -16,7 +16,7 @@ class Cla2:
 
 class ObjectTestCase(TestCase):
     def batch_verify(self, passed_values, failed_values, **specs):
-        param = Object("param", **specs)
+        param = Object('param', **specs)
         for value in passed_values:
             self.assertEqual(param.verify(dict(param=value)), value)
         for value in failed_values:

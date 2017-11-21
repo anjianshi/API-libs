@@ -5,26 +5,26 @@ from api_libs.parameters import List, Int, VerifyFailed
 class ListTestCase(TestCase):
     def test_type(self):
         # List parameter 必须指定一个 Parameter 类型的 type spec
-        self.assertRaises(Exception, List, "param")
-        self.assertRaises(Exception, List, "param", type=int)
+        self.assertRaises(Exception, List, 'param')
+        self.assertRaises(Exception, List, 'param', type=int)
 
-        param = List("param", type=Int())
+        param = List('param', type=Int())
         self.assertEqual(param.verify(dict(param=[3, 2, 1])), [3, 2, 1])
 
-        param = List("param", type=Int())
+        param = List('param', type=Int())
         self.assertEqual(param.verify(dict(param=[])), [])
 
-        param = List("param", type=Int(nullable=True))
+        param = List('param', type=Int(nullable=True))
         self.assertEqual(param.verify(dict(param=[3, None, 1])), [3, None, 1])
 
-        param = List("param", type=Int())
-        self.assertRaises(VerifyFailed, param.verify, dict(param=["abc", 2, 1]))
+        param = List('param', type=Int())
+        self.assertRaises(VerifyFailed, param.verify, dict(param=['abc', 2, 1]))
 
-        param = List("param", type=Int(max=2))
+        param = List('param', type=Int(max=2))
         self.assertRaises(VerifyFailed, param.verify, dict(param=[3, 2, 1]))
 
     def batch_verify(self, passed_values, failed_values, **specs):
-        param = List("param", type=Int(), **specs)
+        param = List('param', type=Int(), **specs)
         for value in passed_values:
             self.assertEqual(param.verify(dict(param=value)), value)
         for value in failed_values:

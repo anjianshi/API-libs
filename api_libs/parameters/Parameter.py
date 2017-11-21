@@ -15,7 +15,7 @@ class VerifyFailed(Exception):
 
 
 class Parameter:
-    """
+    '''
     定义一个 interface 参数。
 
     Attributes:
@@ -47,7 +47,7 @@ class Parameter:
     Parameter 默认只让 sysrule 处理 NoValue 和 None 值，如果 sysrule 都执行完毕后，参数值仍然是 NoValue 或 None，那么整个检查行为到此结束，
     把 NoValue / None 作为最终的结果，后面的普通 rule 不再被执行。
     这样设计使得普通 rule 里就不用包含处理 NoValue 和 None 的代码了，节省了精力。因为普通的 rule 不太可能会为 NoValue 和 None 准备什么处理逻辑，即使碰到了也顶多是跳过执行而已。
-    """
+    '''
     def __init__(self, name=NoValue, **specs):
         self.name = name
         self.specs = dict(self.spec_defaults(), **specs)
@@ -55,39 +55,39 @@ class Parameter:
 
     def _sorted_normal_rules(self):
         if len(self.rule_order) != len(set(self.rule_order)):
-            raise Exception("rule_order 不允许出现重复的内容({})".format(self.rule_order))
+            raise Exception('rule_order 不允许出现重复的内容({})'.format(self.rule_order))
 
         methods = inspect.getmembers(self, predicate=inspect.ismethod)
-        normal_rules = [name[5:] for name, _ in methods if name[:5] == "rule_"]
+        normal_rules = [name[5:] for name, _ in methods if name[:5] == 'rule_']
 
         return self.rule_order + list(
             set(normal_rules).difference(set(self.rule_order)))
 
     def __call__(self, *args, **kwargs):
-        """
+        '''
         param.copy(...) 的快捷方式
 
         例如：
         p.copy(required=False)   =>  p(required=False)
-        p.copy("new_name", a=b)  =>  p("new_name", a=b)
-        """
+        p.copy('new_name', a=b)  =>  p('new_name', a=b)
+        '''
         return self.copy(*args, **kwargs)
 
     def copy(self, name=None, **specs_to_inplace):
-        """以当前 Parameter 为基础，复制出一个新的 Parameter
+        '''以当前 Parameter 为基础，复制出一个新的 Parameter
 
         :arg string name: 新 parameter 的名称。若不指定，则沿用原来的名称。
           对于一个有名称的 parameter，如果想在 copy 后让它变得没有名称，需要把此参数的值设成 NoValue。
 
         :arg specs_to_inplace: 修改、新增、移除 rule_spec 的值。通过把 value 设置成 NoValue 可以移除指定的 rule_spec。
-            p1 = Parameter("p1", required=True, default=1)
-            p2 = p1.copy("p2", default=2, nullable=True, required=NoValue)
-            # 相当于： Parameter("p2", default=2, nullable=True)
+            p1 = Parameter('p1', required=True, default=1)
+            p2 = p1.copy('p2', default=2, nullable=True, required=NoValue)
+            # 相当于： Parameter('p2', default=2, nullable=True)
 
             p3 = Parameter()   # 无名称的 parameter
-            p4 = p3.copy("p4") # copy 的同时设置名称
+            p4 = p3.copy('p4') # copy 的同时设置名称
             p5 = p4.copy(NoValue) # copy 的同时把名称去掉
-        """
+        '''
         if name is None:
             name = self.name
 
@@ -104,43 +104,43 @@ class Parameter:
         value = arguments.get(self.name, NoValue) if self.name is not NoValue else arguments
 
         for rule_name in self.sysrule_order:
-            value = getattr(self, "sysrule_" + rule_name)(value)
+            value = getattr(self, 'sysrule_' + rule_name)(value)
 
         if value is not NoValue and value is not None:
             for rule_name in self._normal_rules:
-                value = getattr(self, "rule_" + rule_name)(value)
+                value = getattr(self, 'rule_' + rule_name)(value)
 
         return value
 
     # 各 sysrule 的执行顺序
-    sysrule_order = ["default", "required", "nullable"]
+    sysrule_order = ['default', 'required', 'nullable']
     # 各普通 rule 的执行顺序
     rule_order = []
 
     def spec_defaults(self):
-        """返回各 specs 的默认值（如果有的话）
+        '''返回各 specs 的默认值（如果有的话）
         子类重写此方法时，不要忘了继承父类里的值。方法：
-        return dict(super().spec_defaults(), spec_in_child=value))"""
+        return dict(super().spec_defaults(), spec_in_child=value))'''
         return dict(
             required=True,
             nullable=False
         )
 
     def sysrule_default(self, value):
-        """如果某个参数没有被赋值，则给予其一个默认值"""
-        if value is NoValue and "default" in self.specs:
-            value = self.specs["default"]
+        '''如果某个参数没有被赋值，则给予其一个默认值'''
+        if value is NoValue and 'default' in self.specs:
+            value = self.specs['default']
         return value
 
     def sysrule_required(self, value):
-        """若为 true，则参数必须被赋值（但是不关心它是什么值，即使是 None 也无所谓）"""
-        if self.specs["required"] and value is NoValue:
-            raise VerifyFailed("缺少必要参数：{}".format(self.name))
+        '''若为 true，则参数必须被赋值（但是不关心它是什么值，即使是 None 也无所谓）'''
+        if self.specs['required'] and value is NoValue:
+            raise VerifyFailed('缺少必要参数：{}'.format(self.name))
         return value
 
     def sysrule_nullable(self, value):
-        """是否允许参数值为 None。
-        没被赋值的参数它的值自然不是 None，所以可以通过这个 rule 的检查"""
-        if not self.specs["nullable"] and value is None:
-            raise VerifyFailed("参数 {} 不允许为 None".format(self.name))
+        '''是否允许参数值为 None。
+        没被赋值的参数它的值自然不是 None，所以可以通过这个 rule 的检查'''
+        if not self.specs['nullable'] and value is None:
+            raise VerifyFailed('参数 {} 不允许为 None'.format(self.name))
         return value
