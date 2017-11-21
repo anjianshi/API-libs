@@ -5,9 +5,11 @@ try:
 except ImportError:
     from distutils.core import setup
 
+import api_libs
+
 setup(
     name='API-libs',
-    version='0.1.14',
+    version=api_libs.__version__,
     url='https://github.com/anjianshi/api-libs',
     license='MIT',
     author='anjianshi',
