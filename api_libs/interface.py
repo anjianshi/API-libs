@@ -1,3 +1,4 @@
+from . import APILibError
 from .parameters.Arguments import Arguments
 
 __all__ = ['interface', 'bound_interface']
@@ -41,5 +42,5 @@ def bound_interface(parameters=None):
     return interface(parameters, bound=True)
 
 
-class InterfaceCallFailed(Exception):
+class InterfaceCallFailed(APILibError):
     pass

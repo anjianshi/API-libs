@@ -438,8 +438,9 @@ interface / router 本身不响应 HTTP 请求。如果想把 API 以 Web 服务
 === 使用 Tornado Adapter
 [source,python]
 ----
-from API-libs.adapters.tornado_adapter import TornadoAdapter
+from api_libs.adapters.tornado_adapter import TornadoAdapter
 from tornado.web import Application
+import tornado.ioloop
 
 # 实例化 adapter
 adapter = TornadoAdapter()

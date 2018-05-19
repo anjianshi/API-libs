@@ -1,4 +1,5 @@
 import re
+from . import APILibError
 from .interface import interface as to_interface
 
 __all__ = ['Router', 'Context']
@@ -84,9 +85,9 @@ class Context:
         return self.router._call_with_context(route_path, self, arguments)
 
 
-class RouteRegisterFailed(Exception):
+class RouteRegisterFailed(APILibError):
     pass
 
 
-class RouteCallFailed(Exception):
+class RouteCallFailed(APILibError):
     pass

@@ -1,4 +1,5 @@
 import inspect
+from .. import APILibError
 
 
 class _NoValueCls:
@@ -10,7 +11,7 @@ NoValue = _NoValueCls()
 Remove = NoValue            # NoValue 的别名，执行 copy() 时，若要移除一个 rule_spec，用这个名字比较容易理解
 
 
-class VerifyFailed(Exception):
+class VerifyFailed(APILibError):
     pass
 
 

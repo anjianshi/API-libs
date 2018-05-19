@@ -2,6 +2,7 @@ from tornado.web import RequestHandler
 import tornado.concurrent
 import json
 import asyncio
+from .. import APILibError
 from ..route import Router, Context
 
 __all__ = ['TornadoAdapter']
@@ -148,5 +149,5 @@ class TornadoAdapter:
         return arguments
 
 
-class RequestHandleFailed(Exception):
+class RequestHandleFailed(APILibError):
     pass

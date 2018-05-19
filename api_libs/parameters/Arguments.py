@@ -1,3 +1,4 @@
+from .. import APILibError
 from .Parameter import NoValue
 from .utils import ObjectDict
 
@@ -33,5 +34,5 @@ class Arguments(ObjectDict):
         self._build(parameters, self, allow_unexpected=True)
 
 
-class ArgumentsError(Exception):
+class ArgumentsError(APILibError):
     pass
